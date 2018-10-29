@@ -1,5 +1,3 @@
-export const AccountTagKeys = {
+export const accountTagKeys = {
   sshDescription: 'csui.account.ssh-description',
-  serviceOfferingClass: 'csui.service-offering.class',
-  serviceOfferingParam: 'csui.service-offering.param',
 };

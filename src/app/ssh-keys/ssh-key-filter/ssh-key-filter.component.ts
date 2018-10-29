@@ -1,21 +1,26 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  Output
-} from '@angular/core';
-import { Grouping } from '../../shared/models/grouping.model';
-
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Grouping } from '../../shared/models';
+import { reorderAvailableGroupings } from '../../shared/utils/reorder-groupings';
 
 @Component({
   selector: 'cs-ssh-key-filter',
-  templateUrl: 'ssh-key-filter.component.html'
+  templateUrl: 'ssh-key-filter.component.html',
 })
-export class ShhKeyFilterComponent {
-  @Input() public accounts: Array<Account>;
-  @Input() public selectedAccountIds: Array<string> = [];
-  @Input() public selectedGroupings: Array<Grouping> = [];
-  @Input() public groupings: Array<Grouping>;
-  @Output() public onGroupingsChange = new EventEmitter<Array<Grouping>>();
-  @Output() public onAccountsChange = new EventEmitter<Array<string>>();
+export class ShhKeyFilterComponent implements OnInit {
+  @Input()
+  public accounts: Account[];
+  @Input()
+  public selectedAccountIds: string[] = [];
+  @Input()
+  public selectedGroupings: Grouping[] = [];
+  @Input()
+  public groupings: Grouping[];
+  @Output()
+  public groupingsChanged = new EventEmitter<Grouping[]>();
+  @Output()
+  public accountsChanged = new EventEmitter<string[]>();
+
+  public ngOnInit() {
+    this.groupings = reorderAvailableGroupings(this.groupings, this.selectedGroupings);
+  }
 }

@@ -1,40 +1,37 @@
 import { Injectable } from '@angular/core';
+import { Observable, of } from 'rxjs';
+
 import { BaseTemplateModel } from '../../../template/shared';
-import { Observable } from 'rxjs/Observable';
 import { TagService } from './tag.service';
 import { EntityTagService } from './entity-tag-service.interface';
-import { TemplateTagKeys } from './template-tag-keys';
-import { TemplateGroup } from '../../models/template-group.model';
-
+import { templateTagKeys } from './template-tag-keys';
+import { ImageGroup } from '../../models/config/image-group.model';
+import { resourceType } from '../../../template/shared/base-template.model';
 
 @Injectable()
 export class TemplateTagService implements EntityTagService {
-  public keys = TemplateTagKeys;
+  public keys = templateTagKeys;
 
-  constructor(protected tagService: TagService) {
-  }
+  constructor(protected tagService: TagService) {}
 
   public setDownloadUrl(
     template: BaseTemplateModel,
-    downloadUrl: string
+    downloadUrl: string,
   ): Observable<BaseTemplateModel> {
     return this.tagService.update(
       template,
-      template.resourceType,
+      resourceType(template),
       this.keys.downloadUrl,
-      downloadUrl
+      downloadUrl,
     );
   }
 
-  public setGroup(
-    template: BaseTemplateModel,
-    group: TemplateGroup
-  ): Observable<BaseTemplateModel> {
+  public setGroup(template: BaseTemplateModel, group: ImageGroup): Observable<BaseTemplateModel> {
     return this.tagService.update(
       template,
-      template.resourceType,
+      resourceType(template),
       this.keys.group,
-      group && group.id
+      group && group.id,
     );
   }
 
@@ -43,7 +40,7 @@ export class TemplateTagService implements EntityTagService {
     return this.tagService.remove({
       resourceIds: tag.resourceid,
       resourceType: tag.resourcetype,
-      'tags[0].key': tag.key
+      'tags[0].key': tag.key,
     });
   }
 
@@ -60,6 +57,6 @@ export class TemplateTagService implements EntityTagService {
       agreement = template.tags.find(item => item.key === defaultAgreement);
     }
 
-    return Observable.of(this.tagService.getValueFromTag(agreement) || null);
+    return of(this.tagService.getValueFromTag(agreement) || null);
   }
 }

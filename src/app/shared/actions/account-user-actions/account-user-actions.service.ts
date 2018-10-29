@@ -8,31 +8,30 @@ export class AccountUserActionsService {
     {
       name: 'ACCOUNT_USER_ACTION.EDIT',
       command: 'edit',
-      icon: 'edit',
-      canActivate: user => user.accounttype !== AccountType.User
+      icon: 'mdi-pencil',
+      canActivate: user => user.accounttype !== AccountType.User,
     },
     {
       name: 'ACCOUNT_USER_ACTION.CHANGE_PASSWORD',
       command: 'changePassword',
-      icon: 'lock',
-      canActivate: user => true
+      icon: 'mdi-lock',
+      canActivate: user => true,
     },
     {
       name: 'ACCOUNT_USER_ACTION.REGENERATE_KEY',
       command: 'regenerateKey',
-      icon: 'vpn_key',
+      icon: 'mdi-key',
       confirmMessage: 'DIALOG_MESSAGES.ACCOUNT_USER.CONFIRM_REGENERATE_KEY',
-      canActivate: user => true
+      canActivate: user => true,
     },
     {
       name: 'ACCOUNT_USER_ACTION.DELETE',
       command: 'delete',
-      icon: 'delete',
+      icon: 'mdi-delete',
       confirmMessage: 'DIALOG_MESSAGES.ACCOUNT_USER.CONFIRM_DELETION',
-      canActivate: user => user.id !== this.authService.user.userid
-    }
+      canActivate: user => user.id !== this.authService.user.userid,
+    },
   ];
 
-  constructor(protected authService: AuthService) {
-  }
+  constructor(protected authService: AuthService) {}
 }

@@ -4,7 +4,7 @@ Settings
 -------------
 .. Contents::
 
-In the *Settings* section a user can modify the interface by changing settings.
+In the *Accounts* -> *Settings* section a user can modify the interface by changing settings.
 
 .. figure:: _static/Settings_List.png
    :scale: 80%
@@ -42,14 +42,15 @@ The value is stored in user’s tags.
 
 The maximum allowed value is 300 minutes. Please, note that a long time period of an idle session decreases the account security.
 
-The session timeout can be set in the configuration file. You will find more information in  `Config Guide <https://github.com/bwsw/cloudstack-ui/blob/master/ConfigGuide.md>`_.
+The session timeout can be set in the configuration file. You will find more information in the  `configuration guide <https://github.com/bwsw/cloudstack-ui/blob/master/config-guide.md#session-timeout>`_.
 
+.. _Settings_VMPass:
 
 Save VM passwords by default
 """""""""""""""""""""""""""""""
 This checkbox allows saving passwords to VM tags automatically for all created virtual machines requiring passwords.
 
-Tick this option here. The passwords will be saved to VM tags right at the moment VMs are created. You will see a password (if it is required for the VM) is marked as saved in a dialogue window after the new VM is deployed:
+Tick this option here. The passwords will be saved to VM tags right at the moment VMs are created. You will see a password (if it is required for the VM) is marked as saved in a dialog window after the new VM is deployed:
 
 .. figure:: _static/VMs_Create_Dialogue_SavedPass.png
 
@@ -72,10 +73,28 @@ Regenerate the keys by clicking |refresh icon| above the fields. New keys will b
 
 .. figure:: _static/Settings_APIKeysRefresh.png
 
-Below you can view a connection URL which is used to send requests to CloudStack API. All requests are listed in the Apache CloudStack documentation available by the link below.
+Below you can view a connection URL which is used to send requests to CloudStack API. All requests are listed in the Apache CloudStack documentation available by the link.
 
 .. figure:: _static/Settings_Links.png
 
+VM preferences
+~~~~~~~~~~~~~~~~~~~~~~~~
+In this block you may set up the keyboard layout.
+
+Keyboard layout
+""""""""""""""""""""
+Select a keyboard layout in the drop-down list.
+
+The following options are available:
+
+- Standard US keyboard (default value)
+- UK keyboard
+- Japanese keyboard
+- Simplified Chinese keyboard.
+
+.. figure:: _static/Settings_KeyboardLayout1.png
+
+The selected option will appear in the VNC console kayboard layout parameter when accessing a VM via concole. The selected option is also saved to account tags.
 
 Look and Feel
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -96,7 +115,7 @@ From the drop-down list select the day when a week starts: Monday or Sanday.
 
 .. figure:: _static/Settings_DayOfWeek.png
 
-.. The first day of week can be set in the configuration JSON file. You will find more information in the `Config Guide <https://github.com/bwsw/cloudstack-ui/blob/master/ConfigGuide.md>`_. 
+.. The first day of week can be set in the configuration JSON file. You will find more information in the `Config Guide <https://github.com/bwsw/cloudstack-ui/blob/master/config-guide.md>`_. 
 
 Time Format
 """""""""""""
@@ -104,7 +123,7 @@ Here you have the opportunity to switch the time format from AM/PM to 24H. You c
 
 .. figure:: _static/Settings_TimeFormat.png
 
-.. The time format can be set in the configuration JSON file. You will find more information in the `Config Guide <https://github.com/bwsw/cloudstack-ui/blob/master/ConfigGuide.md>`_. 
+.. The time format can be set in the configuration JSON file. You will find more information in the `Config Guide <https://github.com/bwsw/cloudstack-ui/blob/master/config-guide.md>`_. 
 
 Theme Color
 """""""""""""""""""
@@ -114,7 +133,7 @@ Click the field and select another color if you wish.
 
 .. figure:: _static/Settings_Theme.png
 
-.. A theme color can be set in the configuration JSON file. You will find more information in the `Config Guide <https://github.com/bwsw/cloudstack-ui/blob/master/ConfigGuide.md>`_. 
+A theme color can be set in the configuration JSON file. You will find more information in the `configuration guide <https://github.com/bwsw/cloudstack-ui/blob/master/config-guide.md#default-theme-name>`_. 
 
 .. |bell icon| image:: _static/bell_icon.png
 .. |refresh icon| image:: _static/refresh_icon.png

@@ -8,37 +8,30 @@
   </mat-card-header>
   <mat-card-content>
     <div class="grid grid-right">
-      <div class="row" *ngIf="name">
-        <div>{{ 'VOLUME_PAGE.DETAILS.DISK_OFFERING_NAME' | translate }}</div>
-        <div>{{ name }}</div>
-      </div>
-      <div class="row" *ngIf="displayText">
-        <div>{{ 'VOLUME_PAGE.DETAILS.DESCRIPTION' | translate }}</div>
-        <div>{{ displayText }}</div>
-      </div>
-      <div class="row" *ngIf="minIops">
-        <div>{{ 'VOLUME_PAGE.DETAILS.MIN_IOPS' | translate }}</div>
-        <div>{{ minIops }}</div>
-      </div>
-      <div class="row" *ngIf="maxIops">
-        <div>{{ 'VOLUME_PAGE.DETAILS.MAX_IOPS' | translate }}</div>
-        <div>{{ maxIops }}</div>
-      </div>
-      <div class="row" *ngIf="diskBytesReadRate">
-        <div>{{ 'VOLUME_PAGE.DETAILS.READ_RATE_MB' | translate }}</div>
-        <div>{{ 'UNITS.MBPS' | translate:{ value: diskBytesReadRate | division:10:6 } }}</div>
-      </div>
-      <div class="row" *ngIf="diskBytesWriteRate">
-        <div>{{ 'VOLUME_PAGE.DETAILS.WRITE_RATE_MB' | translate }}</div>
-        <div>{{ 'UNITS.MBPS' | translate:{ value: diskBytesWriteRate | division:10:6 } }}</div>
-      </div>
-      <div class="row" *ngIf="diskIopsReadRate">
-        <div>{{ 'VOLUME_PAGE.DETAILS.READ_RATE_IOPS' | translate }}</div>
-        <div>{{ 'UNITS.IOPS' | translate:{ value: diskIopsReadRate } }}</div>
-      </div>
-      <div class="row" *ngIf="diskIopsWriteRate">
-        <div>{{ 'VOLUME_PAGE.DETAILS.WRITE_RATE_IOPS' | translate }}</div>
-        <div>{{ 'UNITS.IOPS' | translate:{ value: diskIopsWriteRate } }}</div>
+      <cs-parameters-pair name="VOLUME_PAGE.DETAILS.name" [value]="offering.name"></cs-parameters-pair>
+      <cs-parameters-pair name="VOLUME_PAGE.DETAILS.displaytext" [value]="offering.displaytext"></cs-parameters-pair>
+      <cs-parameters-pair name="VOLUME_PAGE.DETAILS.disksize" [value]="offering.disksize || '-'"></cs-parameters-pair>
+      <cs-parameters-pair name="VOLUME_PAGE.DETAILS.bytesreadrate" [value]="convertToMb(offering.diskBytesReadRate) || '-'">
+      </cs-parameters-pair>
+      <cs-parameters-pair name="VOLUME_PAGE.DETAILS.byteswriterate" [value]="convertToMb(offering.diskBytesWriteRate) || '-'">
+      </cs-parameters-pair>
+      <cs-parameters-pair name="VOLUME_PAGE.DETAILS.iopsreadrate" [value]="offering.diskIopsReadRate || '-'"></cs-parameters-pair>
+      <cs-parameters-pair name="VOLUME_PAGE.DETAILS.iopswriterate" [value]="offering.diskIopsWriteRate || '-'"></cs-parameters-pair>
+      <cs-parameters-pair name="VOLUME_PAGE.DETAILS.miniops" [value]="offering.miniops || '-'"></cs-parameters-pair>
+      <cs-parameters-pair name="VOLUME_PAGE.DETAILS.maxiops" [value]="offering.maxiops || '-'"></cs-parameters-pair>
+      <cs-parameters-pair name="VOLUME_PAGE.DETAILS.storagetype" [value]="'VOLUME_PAGE.DETAILS.' + offering.storagetype | translate">
+      </cs-parameters-pair>
+      <cs-parameters-pair
+        name="VOLUME_PAGE.DETAILS.provisioningtype"
+        [value]="'VOLUME_PAGE.DETAILS.' + offering.provisioningtype | translate"
+      >
+      </cs-parameters-pair>
+      <cs-parameters-pair name="VOLUME_PAGE.DETAILS.iscustomized" [value]="'VOLUME_PAGE.DETAILS.' + offering.iscustomized | translate">
+      </cs-parameters-pair>
+
+      <div class="row">
+        <div>{{ 'VOLUME_PAGE.DETAILS.created' | translate }}</div>
+        <div>{{ offeringCreated | csStringifyDate }}</div>
       </div>
     </div>
   </mat-card-content>

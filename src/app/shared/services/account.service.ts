@@ -1,53 +1,43 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
-import { BackendResource } from '../decorators/backend-resource.decorator';
-import { Account } from '../models/account.model';
+import { Observable, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
+
+import { BackendResource } from '../decorators';
 import { AsyncJobService } from './async-job.service';
-import { BaseBackendService } from './base-backend.service';
+import { BaseBackendService, CSCommands } from './base-backend.service';
+import { Account } from '../models';
 
 @Injectable()
 @BackendResource({
-  entity: 'Account'
+  entity: 'Account',
 })
 export class AccountService extends BaseBackendService<Account> {
-
-  constructor(
-    protected http: HttpClient,
-    private asyncJobService: AsyncJobService
-  ) {
+  constructor(protected http: HttpClient, private asyncJobService: AsyncJobService) {
     super(http);
   }
 
   public getAccount(params: {}): Observable<Account> {
-    return this.getList(params).map(accounts => accounts[0]);
+    return this.getList(params).pipe(map(accounts => accounts[0]));
   }
 
   public removeAccount(account: Account): Observable<Account> {
-    return this.sendCommand('delete', { id: account.id })
-      .switchMap(job => this.asyncJobService.queryJob(job))
-      .switchMap(response => Observable.of(account));
+    return this.sendCommand(CSCommands.Delete, { id: account.id }).pipe(
+      switchMap(job => this.asyncJobService.queryJob(job, this.entity)),
+      switchMap(() => of(account)),
+    );
   }
 
   public disableAccount(account: Account): Observable<Account> {
-    return this.sendCommand('disable', {
+    return this.sendCommand(CSCommands.Disable, {
       id: account.id,
-      lock: false
-    }).switchMap(job => this.asyncJobService.queryJob(job))
-      .switchMap(response => Observable.of(response.result.account));
-  }
-
-  public lockAccount(account: Account): Observable<Account> {
-    return this.sendCommand('disable', {
-      id: account.id,
-      lock: true
-    }).switchMap(job => this.asyncJobService.queryJob(job))
-      .switchMap(response => Observable.of(response.result.account));
+      lock: false,
+    }).pipe(switchMap(job => this.asyncJobService.queryJob(job, this.entity)));
   }
 
   public enableAccount(account: Account): Observable<Account> {
-    return this.sendCommand('enable', {
-      id: account.id
-    }).map(res => res.account);
+    return this.sendCommand(CSCommands.Enable, {
+      id: account.id,
+    }).pipe(map(res => res.account));
   }
 }

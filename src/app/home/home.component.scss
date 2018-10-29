@@ -1,33 +1,9 @@
-:host {
-  height: 100%;
-}
-
-.wrapper {
+mat-sidenav-content {
   display: flex;
-  flex: 1 1 auto;
-  height: 100%;
-}
 
-mat-sidenav-container {
-  flex-grow: 1;
-  min-height: 100%;
-  height: auto !important;
-  max-width: 100%;
-  margin: 0;
-
-  mat-sidenav {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    width: 216px;
+  .primary-content {
+    width: 100%;
     height: 100%;
-    max-height: 100%;
-    will-change: transform;
-    color: #424242;
-    overflow: hidden;
-  }
-
-  cs-app-sidebar {
-    overflow: auto;
+    overflow-x: auto;
   }
 }

@@ -1,5 +1,5 @@
 import { BaseModel } from './base.model';
 
-export class Hypervisor extends BaseModel {
-  public name: string;
+export interface Hypervisor extends BaseModel {
+  name: string;
 }

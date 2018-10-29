@@ -1,29 +1,21 @@
 import { Component, ViewChild } from '@angular/core';
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { async, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import {
-  MatDialog,
-  MatTooltipModule
-} from '@angular/material';
+import { MatDialog, MatTooltipModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
-import { Observable } from 'rxjs/Observable';
+import { of } from 'rxjs';
 import { MockTranslatePipe } from '../../../../testutils/mocks/mock-translate.pipe.spec';
 import { BaseTemplateModel } from '../../../template/shared/base-template.model';
 import { Iso } from '../../../template/shared/iso.model';
 import { Template } from '../../../template/shared/template.model';
-import { VmTemplateDialogComponent } from './vm-template-dialog.component';
 import { VmCreationTemplateComponent } from './vm-creation-template.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../../testutils/mocks/mock-translate.service.spec';
 
-const templatesRaw = require(
-  '../../../../testutils/mocks/model-services/fixtures/templates.json');
-const isosRaw = require('../../../../testutils/mocks/model-services/fixtures/isos.json');
+const templatesRaw: Template[] = require('../../../../testutils/mocks/model-services/fixtures/templates.json');
+const isosRaw: Iso[] = require('../../../../testutils/mocks/model-services/fixtures/isos.json');
 
-const templates: Array<Template> = [
-  ...templatesRaw.map(t => new Template(t)),
-  ...isosRaw.map(i => new Iso(i))
-];
+const templates: BaseTemplateModel[] = [...templatesRaw, ...isosRaw];
 
 @Component({
   selector: 'cs-test',
@@ -31,17 +23,17 @@ const templates: Array<Template> = [
     <cs-vm-creation-template
       [(ngModel)]="template"
     ></cs-vm-creation-template>
-  `
+  `,
 })
 class TestComponent {
-  @ViewChild(VmCreationTemplateComponent) public vmTemplateComponent: VmCreationTemplateComponent;
+  @ViewChild(VmCreationTemplateComponent)
+  public vmTemplateComponent: VmCreationTemplateComponent;
   public template: BaseTemplateModel;
-  public templates: Array<Template>;
+  public templates: BaseTemplateModel[];
 }
 
 describe('VmCreationTemplateComponent', () => {
-  let component: VmCreationTemplateComponent;
-  let fixture: ComponentFixture<VmCreationTemplateComponent>;
+  // tslint:disable-next-line
   let template: BaseTemplateModel;
 
   function createTestComponent() {
@@ -56,30 +48,21 @@ describe('VmCreationTemplateComponent', () => {
   const mockDialog = {
     open: jasmine.createSpy('open').and.callFake(() => {
       return {
-        afterClosed: () => Observable.of(template)
+        afterClosed: () => of(template),
       };
-    })
+    }),
   };
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      imports: [
-        FormsModule,
-        MatTooltipModule
-      ],
-      declarations: [
-        VmCreationTemplateComponent,
-        TestComponent,
-        MockTranslatePipe
-      ],
+      imports: [FormsModule, MatTooltipModule],
+      declarations: [VmCreationTemplateComponent, TestComponent, MockTranslatePipe],
       providers: [
         { provide: MatDialog, useValue: mockDialog },
-        { provide: TranslateService, useClass: MockTranslateService }
-      ]
-    })
-      .compileComponents();
+        { provide: TranslateService, useClass: MockTranslateService },
+      ],
+    }).compileComponents();
   }));
-
 
   // it('should display selectedTemplate name', async(async () => {
   //   const { f } = createTestComponent();
@@ -94,16 +77,15 @@ describe('VmCreationTemplateComponent', () => {
   //   );
   // }));
 
-
   it('should display error message when templates and isos are empty', async(async () => {
     const { f } = createTestComponent();
 
     await f.whenStable();
     f.detectChanges();
 
-    const messageContainer = f.debugElement.query(By.css('.mat-input-wrapper'));
+    const messageContainer = f.debugElement.query(By.css('.mat-form-field-wrapper'));
     expect(messageContainer.nativeElement.textContent.trim()).toBe(
-      `VM_PAGE.VM_CREATION.NO_TEMPLATES`
+      `VM_PAGE.VM_CREATION.NO_TEMPLATES`,
     );
     expect(messageContainer.query(By.css('span.no-templates'))).toBeDefined();
   }));

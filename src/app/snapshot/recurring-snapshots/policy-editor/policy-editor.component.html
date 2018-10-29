@@ -6,27 +6,27 @@
   <div [ngSwitch]="policyMode">
     <cs-hourly-policy
       name="hourlyPolicy"
-      *ngSwitchCase="Policies.Hourly"
+      *ngSwitchCase="policyType.Hourly"
       [(ngModel)]="policy"
     ></cs-hourly-policy>
 
     <cs-daily-policy
       name="dailyPolicy"
-      *ngSwitchCase="Policies.Daily"
+      *ngSwitchCase="policyType.Daily"
       [(ngModel)]="policy"
       [timeFormat]="timeFormat"
     ></cs-daily-policy>
 
     <cs-weekly-policy
       name="weeklyPolicy"
-      *ngSwitchCase="Policies.Weekly"
+      *ngSwitchCase="policyType.Weekly"
       [(ngModel)]="policy"
       [timeFormat]="timeFormat"
     ></cs-weekly-policy>
 
     <cs-monthly-policy
       name="monthlyPolicy"
-      *ngSwitchCase="Policies.Monthly"
+      *ngSwitchCase="policyType.Monthly"
       [(ngModel)]="policy"
       [timeFormat]="timeFormat"
     ></cs-monthly-policy>
@@ -44,8 +44,6 @@
       [(ngModel)]="storedSnapshots"
       [min]="minStoredSnapshots"
       [max]="maxStoredSnapshots"
-      [minValue]="minStoredSnapshots"
-      [maxValue]="maxStoredSnapshots"
     ></cs-stored-number>
 
       <div class="button-wrapper">
@@ -53,7 +51,7 @@
           mat-icon-button
           [disabled]="!policyEditorForm.valid"
         >
-          <mat-icon>add</mat-icon>
+          <mat-icon class="mdi-plus"></mat-icon>
         </button>
       </div>
     </div>

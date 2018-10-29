@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
-import { SecurityGroupCreationService } from './security-group-creation.service';
-import { Observable } from 'rxjs/Observable';
-import { SecurityGroup } from '../../sg.model';
+import { Observable } from 'rxjs';
 
+import { SecurityGroupCreationService } from './security-group-creation.service';
+import { SecurityGroupNative } from '../../sg.model';
 
 @Injectable()
 export class TemplateSecurityGroupCreationService extends SecurityGroupCreationService {
-  protected securityGroupCreationPostAction(securityGroup: SecurityGroup): Observable<SecurityGroup> {
+  protected securityGroupCreationPostAction(
+    securityGroup: SecurityGroupNative,
+  ): Observable<SecurityGroupNative> {
     return this.securityGroupTagService.markAsTemplate(securityGroup);
   }
 }

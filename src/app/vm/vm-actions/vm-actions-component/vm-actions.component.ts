@@ -1,93 +1,108 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  Output
-} from '@angular/core';
-import { ConfigService } from '../../../shared/services/config.service';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { select, Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { VmActionsService } from '../../shared/vm-actions.service';
-import {
-  VirtualMachine,
-  VmState
-} from '../../shared/vm.model';
+import { VirtualMachine, VmState } from '../../shared/vm.model';
 import { AuthService } from '../../../shared/services/auth.service';
 import { VmActions } from '../vm-action';
-
+import { configSelectors, State } from '../../../root-store';
+import { ExtensionsConfig } from '../../../shared/models/config';
 
 @Component({
   selector: 'cs-vm-actions',
-  templateUrl: 'vm-actions.component.html'
+  templateUrl: 'vm-actions.component.html',
 })
 export class VmActionsComponent {
-  @Input() public vm: VirtualMachine;
-  @Output() public onVmStart = new EventEmitter<VirtualMachine>();
-  @Output() public onVmStop = new EventEmitter<VirtualMachine>();
-  @Output() public onVmReboot = new EventEmitter<VirtualMachine>();
-  @Output() public onVmRestore = new EventEmitter<VirtualMachine>();
-  @Output() public onVmDestroy = new EventEmitter<VirtualMachine>();
-  @Output() public onVmResetPassword = new EventEmitter<VirtualMachine>();
-  @Output() public onVmExpunge = new EventEmitter<VirtualMachine>();
-  @Output() public onVmRecover = new EventEmitter<VirtualMachine>();
-  @Output() public onVmAccess = new EventEmitter<VirtualMachine>();
-  @Output() public onVmPulse = new EventEmitter<VirtualMachine>();
+  @Input()
+  public vm: VirtualMachine;
+  @Output()
+  public vmStarted = new EventEmitter<VirtualMachine>();
+  @Output()
+  public vmStopped = new EventEmitter<VirtualMachine>();
+  @Output()
+  public vmRebooted = new EventEmitter<VirtualMachine>();
+  @Output()
+  public vmRestored = new EventEmitter<VirtualMachine>();
+  @Output()
+  public vmDestroyed = new EventEmitter<VirtualMachine>();
+  @Output()
+  public vmResetedPassword = new EventEmitter<VirtualMachine>();
+  @Output()
+  public vmExpunged = new EventEmitter<VirtualMachine>();
+  @Output()
+  public vmRecovered = new EventEmitter<VirtualMachine>();
+  @Output()
+  public vmAccessed = new EventEmitter<VirtualMachine>();
+  @Output()
+  public vmPulse = new EventEmitter<VirtualMachine>();
+  @Output()
+  public vmLogs = new EventEmitter<VirtualMachine>();
 
-  public vmActions: Array<any>;
-  public destroyedVmActions: Array<any>;
+  public vmActions$: Observable<any[]>;
+  public destroyedVmActions: any[];
 
   constructor(
-    private configService: ConfigService,
+    store: Store<State>,
     private vmActionsService: VmActionsService,
     private authService: AuthService,
   ) {
-    this.vmActions = this.vmActionsService.actions.filter((action) => {
-      const extensions = this.configService.get('extensions');
-      return action.command !== VmActions.PULSE || extensions && extensions.pulse;
-    });
+    this.vmActions$ = store.pipe(
+      select(configSelectors.get('extensions')),
+      map(extensions => this.actionListDependingOnExtension(extensions)),
+    );
     this.destroyedVmActions = this.vmActionsService.destroyedActions;
   }
 
   public onAction(action, vm: VirtualMachine): void {
     switch (action.command) {
       case VmActions.START: {
-        this.onVmStart.emit(vm);
+        this.vmStarted.emit(vm);
         break;
       }
       case VmActions.ACCESS: {
-        this.onVmAccess.emit(vm);
+        this.vmAccessed.emit(vm);
         break;
       }
       case VmActions.PULSE: {
-        this.onVmPulse.emit(vm);
+        this.vmPulse.emit(vm);
         break;
       }
       case VmActions.STOP: {
-        this.onVmStop.emit(vm);
+        this.vmStopped.emit(vm);
         break;
       }
       case VmActions.REBOOT: {
-        this.onVmReboot.emit(vm);
+        this.vmRebooted.emit(vm);
         break;
       }
       case VmActions.RESTORE: {
-        this.onVmRestore.emit(vm);
+        this.vmRestored.emit(vm);
         break;
       }
       case VmActions.RESET_PASSWORD: {
-        this.onVmResetPassword.emit(vm);
+        this.vmResetedPassword.emit(vm);
         break;
       }
       case VmActions.DESTROY: {
-        this.onVmDestroy.emit(vm);
+        this.vmDestroyed.emit(vm);
         break;
       }
       case VmActions.EXPUNGE: {
-        this.onVmExpunge.emit(vm);
+        this.vmExpunged.emit(vm);
         break;
       }
       case VmActions.RECOVER: {
-        this.onVmRecover.emit(vm);
+        this.vmRecovered.emit(vm);
         break;
       }
+      case VmActions.LOGS: {
+        this.vmLogs.emit(vm);
+        break;
+      }
+      default:
+        break;
     }
   }
 
@@ -97,5 +112,20 @@ export class VmActionsComponent {
 
   public get canExpungeOrRecoverVm(): boolean {
     return this.authService.canExpungeOrRecoverVm();
+  }
+
+  private actionListDependingOnExtension(extensions: ExtensionsConfig) {
+    return this.vmActionsService.actions.filter(action => {
+      if (action.command === VmActions.PULSE) {
+        return extensions.pulse;
+      }
+
+      if (action.command === VmActions.LOGS) {
+        // todo: fix if we want this action in vm's context menu
+        return extensions.vmLogs && false;
+      }
+
+      return true;
+    });
   }
 }

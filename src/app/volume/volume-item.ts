@@ -1,17 +1,16 @@
-import { DiskOffering } from '../shared/models/disk-offering.model';
-import { Volume } from '../shared/models/volume.model';
+import { switchMap } from 'rxjs/operators';
+
+import { DiskOffering, Volume, Zone } from '../shared/models';
 import { DiskOfferingService } from '../shared/services/disk-offering.service';
 import { ZoneService } from '../shared/services/zone.service';
-import { Zone } from '../shared/models/zone.model';
-
 
 export abstract class VolumeItem {
   public item: Volume;
-  public diskOfferings: Array<DiskOffering>;
+  public diskOfferings: DiskOffering[];
 
   constructor(
     protected diskOfferingService: DiskOfferingService,
-    protected zoneService: ZoneService
+    protected zoneService: ZoneService,
   ) {}
 
   protected loadDiskOfferings(): void {
@@ -19,16 +18,18 @@ export abstract class VolumeItem {
 
     this.zoneService
       .get(this.item.zoneid)
-      .switchMap((_zone: Zone) => {
-        zone = _zone;
-        return this.diskOfferingService.getList({ zoneId: zone.id });
-      })
+      .pipe(
+        switchMap((z: Zone) => {
+          zone = z;
+          return this.diskOfferingService.getList({ zoneId: zone.id });
+        }),
+      )
       .subscribe(diskOfferings => {
         this.diskOfferings = diskOfferings.filter((diskOffering: DiskOffering) => {
           return this.diskOfferingService.isOfferingAvailableForVolume(
             diskOffering,
             this.item,
-            zone
+            zone,
           );
         });
       });

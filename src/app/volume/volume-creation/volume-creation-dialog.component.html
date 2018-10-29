@@ -26,7 +26,7 @@
             id="zone"
             name="zone"
             required
-            (change)="updateZone($event.value)"
+            (selectionChange)="updateZone($event.value)"
           >
             <mat-option
               *ngFor="let z of zones"
@@ -37,26 +37,13 @@
           </mat-select>
         </mat-form-field>
       </div>
-      <div>
-        <mat-form-field
-          class="full-width-input"
-        >
-          <mat-select
-            class="form-select-control"
-            name="diskOffering"
-            [(ngModel)]="newVolume.diskofferingid"
-            [placeholder]="'VOLUME_PAGE.SPARE_DRIVE_CREATION.DISK_OFFERING' | translate"
-            [required]="true"
-            (selectionChange)="updateDiskOffering($event.value)"
-          >
-            <mat-option
-              *ngFor="let offering of diskOfferings"
-              [value]="offering.id"
-            >
-              {{ offering.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+      <div *ngIf="diskOfferings?.length">
+        <cs-disk-offering-selector
+          name="diskOffering"
+          [diskOfferings]="diskOfferings"
+          [ngModel]="diskOffering"
+          (changed)="updateDiskOffering($event)"
+        ></cs-disk-offering-selector>
       </div>
       <div *ngIf="showResizeSlider && minSize && maxSize">
         <cs-slider
@@ -82,7 +69,7 @@
         mat-button
         color="primary"
         type="submit"
-        [disabled]="!volumeCreationForm.valid"
+        [disabled]="!volumeCreationForm.valid || !this.newVolume.diskofferingid"
       >
         {{ 'COMMON.CREATE' | translate }}
       </button>

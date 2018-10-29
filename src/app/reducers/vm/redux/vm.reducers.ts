@@ -1,59 +1,54 @@
-import { VirtualMachineTagKeys } from '../../../shared/services/tags/vm-tag-keys';
-import { noGroup } from '../../../vm/vm-filter/vm-filter.component';
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { createEntityAdapter, EntityAdapter, EntityState } from '@ngrx/entity';
-import { VirtualMachine } from '../../../vm/shared/vm.model';
-import { InstanceGroup } from '../../../shared/models';
+
+import { virtualMachineTagKeys } from '../../../shared/services/tags/vm-tag-keys';
+import { noGroup } from '../../../vm/vm-filter/vm-filter.component';
+import { getInstanceGroupName, VirtualMachine } from '../../../vm/shared/vm.model';
+import { InstanceGroup, Tag, Zone } from '../../../shared/models';
 import { VmCreationSecurityGroupData } from '../../../vm/vm-creation/security-group/vm-creation-security-group-data';
 import { Rules } from '../../../shared/components/security-group-builder/rules';
 import { Utils } from '../../../shared/services/utils/utils.service';
 import { VmCreationState } from '../../../vm/vm-creation/data/vm-creation-state';
-import { KeyboardLayout } from '../../../vm/vm-creation/keyboards/keyboards.component';
 // tslint:disable-next-line
 import {
   ProgressLoggerMessage,
-  ProgressLoggerMessageStatus
+  ProgressLoggerMessageStatus,
 } from '../../../shared/components/progress-logger/progress-logger-message/progress-logger-message';
-import { NotSelectedSshKey } from '../../../vm/vm-creation/ssh-key-selector/ssh-key-selector.component';
+import { notSelectedSshKey } from '../../../vm/vm-creation/ssh-key-selector/ssh-key-selector.component';
 
 import * as fromAccounts from '../../accounts/redux/accounts.reducers';
 import * as vmActions from './vm.actions';
 import * as fromSGroup from '../../security-groups/redux/sg.reducers';
 import * as affinityGroupActions from '../../affinity-groups/redux/affinity-groups.actions';
+import * as fromZones from '../../zones/redux/zones.reducers';
 
-/**
- * @ngrx/entity provides a predefined interface for handling
- * a structured dictionary of records. This interface
- * includes an array of ids, and a dictionary of the provided
- * model type by id. This interface is extended to include
- * any additional interface properties.
- */
 export interface State extends EntityState<VirtualMachine> {
-  loading: boolean,
-  selectedVMId: string,
+  loading: boolean;
+  loaded: boolean;
+  selectedVMId: string;
   filters: {
-    selectedZoneIds: string[],
-    selectedGroupNames: string[],
-    selectedStates: string[],
-    selectedAccountIds: string[],
-    selectedGroupings: any[],
-    query: string,
-  },
+    selectedZoneIds: string[];
+    selectedGroupNames: string[];
+    selectedStates: string[];
+    selectedAccountIds: string[];
+    selectedGroupings: any[];
+    query: string;
+  };
   attachmentFilters: {
-    account: string,
-    domainId: string,
-  }
+    account: string;
+    domainId: string;
+  };
 }
 
 export interface FormState {
-  loading: boolean,
-  showOverlay: boolean,
-  deploymentInProgress: boolean,
-  enoughResources: boolean,
-  insufficientResources: Array<string>,
-  loggerStageList: Array<ProgressLoggerMessage>,
-  deployedVm: VirtualMachine,
-  state: VmCreationState
+  loading: boolean;
+  showOverlay: boolean;
+  deploymentInProgress: boolean;
+  enoughResources: boolean;
+  insufficientResources: string[];
+  loggerStageList: ProgressLoggerMessage[];
+  deployedVm: VirtualMachine;
+  state: VmCreationState;
 }
 
 export interface VirtualMachineState {
@@ -63,7 +58,7 @@ export interface VirtualMachineState {
 
 export const virtualMachineReducers = {
   list: listReducer,
-  form: formReducer
+  form: formReducer,
 };
 
 /**
@@ -74,11 +69,10 @@ export const virtualMachineReducers = {
  * a sortComparer option which is set to a compare
  * function if the records are to be sorted.
  */
-export const adapter: EntityAdapter<VirtualMachine> = createEntityAdapter<VirtualMachine>(
-  {
-    selectId: (item: VirtualMachine) => item.id,
-    sortComparer: Utils.sortByName
-  });
+export const adapter: EntityAdapter<VirtualMachine> = createEntityAdapter<VirtualMachine>({
+  selectId: (item: VirtualMachine) => item.id,
+  sortComparer: Utils.sortByName,
+});
 
 /** getInitialState returns the default initial state
  * for the generated entity state. Initial state
@@ -86,6 +80,7 @@ export const adapter: EntityAdapter<VirtualMachine> = createEntityAdapter<Virtua
  */
 export const initialListState: State = adapter.getInitialState({
   loading: false,
+  loaded: false,
   selectedVMId: null,
   filters: {
     selectedZoneIds: [],
@@ -98,19 +93,21 @@ export const initialListState: State = adapter.getInitialState({
   attachmentFilters: {
     account: '',
     domainId: '',
-  }
+  },
 });
 
-export function listReducer(
-  state = initialListState,
-  action: vmActions.Actions
-): State {
+export function listReducer(state = initialListState, action: vmActions.Actions): State {
   switch (action.type) {
     case vmActions.LOAD_VMS_REQUEST: {
       return {
         ...state,
-        loading: true
+        loading: true,
       };
+    }
+
+    case vmActions.VIRTUAL_MACHINE_LOADED: {
+      const vm = action.payload.vm;
+      return adapter.updateOne({ id: vm.id, changes: vm }, state);
     }
 
     case vmActions.VM_FILTER_UPDATE: {
@@ -118,8 +115,8 @@ export function listReducer(
         ...state,
         filters: {
           ...state.filters,
-          ...action.payload
-        }
+          ...action.payload,
+        },
       };
     }
 
@@ -128,36 +125,28 @@ export function listReducer(
         ...state,
         attachmentFilters: {
           ...state.attachmentFilters,
-          ...action.payload
-        }
+          ...action.payload,
+        },
       };
     }
 
     case vmActions.LOAD_SELECTED_VM: {
       return {
         ...state,
-        selectedVMId: action.payload
+        selectedVMId: action.payload,
       };
     }
 
     case vmActions.LOAD_VMS_RESPONSE: {
       return {
-        /**
-         * The addMany function provided by the created adapter
-         * adds many records to the entity dictionary
-         * and returns a new state including those records. If
-         * the collection is to be sorted, the adapter will
-         * sort each record upon entry into the sorted array.
-         */
         ...adapter.addAll([...action.payload], state),
-        loading: false
+        loading: false,
+        loaded: true,
       };
     }
 
     case vmActions.UPDATE_VM: {
-      return {
-        ...adapter.updateOne({ id: action.payload.id, changes: action.payload }, state),
-      };
+      return adapter.updateOne({ id: action.payload.id, changes: action.payload }, state);
     }
 
     case vmActions.REPLACE_VM: {
@@ -179,6 +168,20 @@ export function listReducer(
       };
     }
 
+    case vmActions.SAVE_VM_PASSWORD_SUCCESS: {
+      const { vmId, password } = action.payload;
+      const passwordTag: Tag = {
+        key: virtualMachineTagKeys.passwordTag,
+        value: password,
+      };
+      // vm tags are empty during this operation
+      const tags = state.entities[vmId].tags;
+      const tagsWithNewPassword: Tag[] = [...tags, passwordTag];
+      return {
+        ...adapter.updateOne({ id: vmId, changes: { tags: tagsWithNewPassword } }, state),
+      };
+    }
+
     default: {
       return state;
     }
@@ -187,109 +190,78 @@ export function listReducer(
 
 export const getVMsState = createFeatureSelector<VirtualMachineState>('virtualMachines');
 
-export const getVMsEntitiesState = createSelector(
-  getVMsState,
-  state => state.list
-);
+export const getVMsEntitiesState = createSelector(getVMsState, state => state.list);
 
 export const {
   selectIds,
   selectEntities,
   selectAll,
-  selectTotal,
+  selectTotal: getVMCount,
 } = adapter.getSelectors(getVMsEntitiesState);
 
-export const isLoading = createSelector(
-  getVMsEntitiesState,
-  state => state.loading
-);
+export const isLoading = createSelector(getVMsEntitiesState, state => state.loading);
 
-export const getSelectedId = createSelector(
-  getVMsEntitiesState,
-  state => state.selectedVMId
-);
+export const isLoaded = createSelector(getVMsEntitiesState, state => state.loaded);
+
+export const getSelectedId = createSelector(getVMsEntitiesState, state => state.selectedVMId);
 
 export const getSelectedVM = createSelector(
   getVMsState,
   getSelectedId,
-  (state, selectedId) => state.list.entities[selectedId]
+  (state, selectedId): VirtualMachine => state.list.entities[selectedId],
 );
 
-export const filters = createSelector(
-  getVMsEntitiesState,
-  state => state.filters
+export const getSelectedVmAffinityGroups = createSelector(
+  getSelectedVM,
+  vm => vm && vm.affinitygroup,
 );
+
+export const filters = createSelector(getVMsEntitiesState, state => state.filters);
 
 export const attachmentFilters = createSelector(
   getVMsEntitiesState,
-  state => state.attachmentFilters
+  state => state.attachmentFilters,
 );
 
-export const filterQuery = createSelector(
-  filters,
-  state => state.query
-);
+export const filterQuery = createSelector(filters, state => state.query);
 
+export const filterSelectedZoneIds = createSelector(filters, state => state.selectedZoneIds);
 
-export const filterSelectedZoneIds = createSelector(
-  filters,
-  state => state.selectedZoneIds
-);
+export const filterSelectedStates = createSelector(filters, state => state.selectedStates);
 
-export const filterSelectedStates = createSelector(
-  filters,
-  state => state.selectedStates
-);
+export const filterSelectedGroupNames = createSelector(filters, state => state.selectedGroupNames);
 
-export const filterSelectedGroupNames = createSelector(
-  filters,
-  state => state.selectedGroupNames
-);
+export const filterSelectedAccountIds = createSelector(filters, state => state.selectedAccountIds);
 
-export const filterSelectedAccountIds = createSelector(
-  filters,
-  state => state.selectedAccountIds
-);
+export const filterSelectedGroupings = createSelector(filters, state => state.selectedGroupings);
 
-export const filterSelectedGroupings = createSelector(
-  filters,
-  state => state.selectedGroupings
-);
+export const selectVmGroups = createSelector(selectAll, vms => {
+  const groups = vms.reduce((groupsMap, vm) => {
+    const group = vm.tags.find(tag => tag.key === virtualMachineTagKeys.group);
 
-export const selectVmGroups = createSelector(
-  selectAll,
-  (vms) => {
-    const groups = vms.reduce((groupsMap, vm) => {
-      const group = vm.tags.find(tag => tag.key === VirtualMachineTagKeys.group);
-
-      if (group && group.value && !groupsMap[group.value]) {
-        groupsMap[group.value] = new InstanceGroup(group.value);
-      }
-      return groupsMap;
-    }, {});
-    return groups ? Object.values(groups) : [];
-  }
-);
+    if (group && group.value && !groupsMap[group.value]) {
+      groupsMap[group.value] = new InstanceGroup(group.value);
+    }
+    return groupsMap;
+  }, {});
+  return groups ? Object.values(groups) : [];
+});
 
 export const getUsingSGVMs = createSelector(
   selectAll,
   fromSGroup.getSelectedId,
-  (vms, sGroupId) => {
-    const sGroupFilter = vm => vm.securityGroup.find(group => group.id === sGroupId);
-    return vms.filter(vm => sGroupFilter(vm));
-  }
+  (vms: VirtualMachine[], sGroupId: string) => {
+    const sGroupFilter = (vm: VirtualMachine) =>
+      vm.securitygroup.find(group => group.id === sGroupId);
+    return vms.filter(sGroupFilter);
+  },
 );
 
-export const getAttachmentVMs = createSelector(
-  selectAll,
-  attachmentFilters,
-  (vms, filter) => {
-    const accountFilter =
-      vm => (vm.account === filter.account && vm.domainid === filter.domainId);
+export const getAttachmentVMs = createSelector(selectAll, attachmentFilters, (vms, filter) => {
+  const accountFilter = vm => vm.account === filter.account && vm.domainid === filter.domainId;
 
-    return vms.filter(vm => accountFilter(vm));
-  }
-);
+  return vms.filter(accountFilter);
+});
 
 export const selectFilteredVMs = createSelector(
   selectAll,
@@ -306,39 +278,54 @@ export const selectFilteredVMs = createSelector(
     selectedGroupNames,
     selectedZoneIds,
     selectedAccountIds,
-    accounts
+    accounts,
   ) => {
     const queryLower = query && query.toLowerCase();
     const statesMap = selectedStates.reduce((m, i) => ({ ...m, [i]: i }), {});
     const zoneIdsMap = selectedZoneIds.reduce((m, i) => ({ ...m, [i]: i }), {});
     const groupNamesMap = selectedGroupNames.reduce((m, i) => ({ ...m, [i]: i }), {});
 
-    const selectedAccounts = accounts.filter(
-      account => selectedAccountIds.find(id => id === account.id));
+    const selectedAccounts = accounts.filter(account =>
+      selectedAccountIds.find(id => id === account.id),
+    );
     const accountsMap = selectedAccounts.reduce((m, i) => ({ ...m, [i.name]: i }), {});
     const domainsMap = selectedAccounts.reduce((m, i) => ({ ...m, [i.domainid]: i }), {});
 
-    const queryFilter = vm => !query || vm.name.toLowerCase().includes(queryLower);
+    const queryFilter = (vm: VirtualMachine) =>
+      !query || vm.name.toLowerCase().includes(queryLower);
 
-    const selectedStatesFilter = vm => !selectedStates.length || !!statesMap[vm.state];
+    const selectedStatesFilter = (vm: VirtualMachine) =>
+      !selectedStates.length || !!statesMap[vm.state];
 
-    const selectedGroupNamesFilter = vm => !selectedGroupNames.length ||
-      (!vm.instanceGroup && groupNamesMap[noGroup]) || (vm.instanceGroup && groupNamesMap[vm.instanceGroup.name]);
+    const selectedGroupNamesFilter = (vm: VirtualMachine) => {
+      const filterUnused = selectedGroupNames.length === 0;
+      if (filterUnused) {
+        return true;
+      }
 
-    const selectedZoneIdsFilter =
-      vm => !selectedZoneIds.length || !!zoneIdsMap[vm.zoneId];
+      const instanceGroupName =
+        getInstanceGroupName(vm) != null ? getInstanceGroupName(vm) : noGroup;
+      const isIstanceGroupNameOneOfSelected = groupNamesMap[instanceGroupName] != null;
 
-    const selectedAccountIdsFilter = vm => !selectedAccountIds.length ||
-      (accountsMap[vm.account] && domainsMap[vm.domainid]);
+      return isIstanceGroupNameOneOfSelected;
+    };
+
+    const selectedZoneIdsFilter = (vm: VirtualMachine) =>
+      !selectedZoneIds.length || !!zoneIdsMap[vm.zoneid];
+
+    const selectedAccountIdsFilter = (vm: VirtualMachine) =>
+      !selectedAccountIds.length || (accountsMap[vm.account] && domainsMap[vm.domainid]);
 
     return vms.filter(vm => {
-      return selectedStatesFilter(vm)
-        && queryFilter(vm)
-        && selectedGroupNamesFilter(vm)
-        && selectedZoneIdsFilter(vm)
-        && selectedAccountIdsFilter(vm);
+      return (
+        selectedStatesFilter(vm) &&
+        queryFilter(vm) &&
+        selectedGroupNamesFilter(vm) &&
+        selectedZoneIdsFilter(vm) &&
+        selectedAccountIdsFilter(vm)
+      );
     });
-  }
+  },
 );
 
 export const initialFormState: FormState = {
@@ -356,21 +343,20 @@ export const initialFormState: FormState = {
     displayName: '',
     doStartVm: true,
     instanceGroup: null,
-    keyboard: KeyboardLayout.us,
-    rootDiskSize: 0,
+    rootDiskSize: null,
     rootDiskMinSize: 0,
     securityGroupData: VmCreationSecurityGroupData.fromRules(new Rules()),
     serviceOffering: null,
-    sshKeyPair: NotSelectedSshKey,
+    sshKeyPair: notSelectedSshKey,
     template: null,
     zone: null,
-    agreement: false
-  }
+    agreement: false,
+  },
 };
 
 export function formReducer(
   state = initialFormState,
-  action: vmActions.Actions | affinityGroupActions.Actions
+  action: vmActions.Actions | affinityGroupActions.Actions,
 ): FormState {
   switch (action.type) {
     case vmActions.VM_FORM_INIT: {
@@ -392,7 +378,7 @@ export function formReducer(
       return {
         ...state,
         showOverlay: true,
-        deploymentInProgress: true
+        deploymentInProgress: true,
       };
     }
     case vmActions.VM_DEPLOYMENT_INIT_ACTION_LIST: {
@@ -404,10 +390,9 @@ export function formReducer(
     case vmActions.VM_DEPLOYMENT_UPDATE_LOGGER_MESSAGE: {
       const messages = [...state.loggerStageList].map(message => {
         if (message.text != null && message.text === action.payload.messageText) {
-          return Object.assign({}, message, action.payload.data);
-        } else {
-          return message;
+          return { ...message, ...action.payload.data };
         }
+        return message;
       });
 
       return { ...state, loggerStageList: [...messages] };
@@ -416,16 +401,15 @@ export function formReducer(
       return {
         ...state,
         deployedVm: action.payload,
-        deploymentInProgress: false
+        deploymentInProgress: false,
       };
     }
     case vmActions.VM_DEPLOYMENT_REQUEST_ERROR: {
       const messages = [...state.loggerStageList].map(message => {
         if (message.status && message.status.includes(ProgressLoggerMessageStatus.InProgress)) {
-          return Object.assign({}, message, { status: [ProgressLoggerMessageStatus.Error] });
-        } else {
-          return message;
+          return { ...message, status: [ProgressLoggerMessageStatus.Error] };
         }
+        return message;
       });
 
       return { ...state, loggerStageList: [...messages], deploymentInProgress: false };
@@ -433,7 +417,7 @@ export function formReducer(
     case vmActions.VM_DEPLOYMENT_COPY_TAGS: {
       return {
         ...state,
-        deployedVm: <VirtualMachine>({ ...state.deployedVm, tags: action.payload })
+        deployedVm: { ...state.deployedVm, tags: action.payload } as VirtualMachine,
       };
     }
     case affinityGroupActions.LOAD_AFFINITY_GROUPS_RESPONSE: {
@@ -446,52 +430,39 @@ export function formReducer(
   }
 }
 
-export const getVmForm = createSelector(
+export const getVmForm = createSelector(getVMsState, state => state.form);
+
+export const getVmFormState = createSelector(getVMsState, state => state.form.state);
+
+export const getVmFormStateAffinityGroup = createSelector(
   getVMsState,
-  state => state.form
-);
-export const getVmFormState = createSelector(
-  getVMsState,
-  state => state.form.state
+  state => state.form.state.affinityGroup,
 );
 
-export const formIsLoading = createSelector(
-  getVmForm,
-  state => state.loading
-);
+export const formIsLoading = createSelector(getVmForm, state => state.loading);
 
-export const enoughResources = createSelector(
-  getVmForm,
-  state => state.enoughResources
-);
+export const enoughResources = createSelector(getVmForm, state => state.enoughResources);
 
 export const insufficientResources = createSelector(
   getVmForm,
-  state => state.insufficientResources
+  state => state.insufficientResources,
 );
 
-export const deploymentInProgress = createSelector(
-  getVmForm,
-  state => state.deploymentInProgress
-);
+export const deploymentInProgress = createSelector(getVmForm, state => state.deploymentInProgress);
 
-export const loggerStageList = createSelector(
-  getVmForm,
-  state => state.loggerStageList
-);
+export const loggerStageList = createSelector(getVmForm, state => state.loggerStageList);
 
-export const showOverlay = createSelector(
-  getVmForm,
-  state => state.showOverlay
-);
+export const showOverlay = createSelector(getVmForm, state => state.showOverlay);
 
-export const getDeployedVM = createSelector(
-  getVmForm,
-  state => state.deployedVm
-);
+export const getDeployedVM = createSelector(getVmForm, state => state.deployedVm);
 
 export const getVmCreationZoneId = createSelector(
   getVmFormState,
-  state => state.zone && state.zone.id
+  state => state.zone && state.zone.id,
 );
 
+export const getVMCreationZone = createSelector(
+  getVmCreationZoneId,
+  fromZones.selectEntities,
+  (vmCreationZoneId, zones): Zone => zones && zones[vmCreationZoneId],
+);

@@ -2,8 +2,7 @@ import { Component, forwardRef, Input, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatInput } from '@angular/material';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable } from 'rxjs/Observable';
-
+import { Observable } from 'rxjs';
 
 export interface HourlyPolicy {
   minute: number;
@@ -16,14 +15,17 @@ export interface HourlyPolicy {
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => HourlyPolicyComponent),
-      multi: true
-    }
-  ]
+      multi: true,
+    },
+  ],
 })
 export class HourlyPolicyComponent implements ControlValueAccessor {
-  @ViewChild(MatInput) public minuteField: MatInput;
+  @ViewChild(MatInput)
+  public minuteField: MatInput;
+  // tslint:disable-next-line:variable-name
   public _policy: HourlyPolicy;
 
+  // tslint:disable-next-line:variable-name
   public _minute = 0;
   public minValue = 0;
   public maxValue = 59;
@@ -31,12 +33,10 @@ export class HourlyPolicyComponent implements ControlValueAccessor {
   constructor(private translateService: TranslateService) {}
 
   public get errorMessage(): Observable<string> {
-    return this.translateService.get(
-      'SERVICE_OFFERING.CUSTOM_SERVICE_OFFERING.BETWEEN',
-      {
-        lowerLimit: this.minValue,
-        upperLimit: this.maxValue
-      });
+    return this.translateService.get('SERVICE_OFFERING.CUSTOM_SERVICE_OFFERING.BETWEEN', {
+      lowerLimit: this.minValue,
+      upperLimit: this.maxValue,
+    });
   }
 
   public get minute(): string {
@@ -48,25 +48,7 @@ export class HourlyPolicyComponent implements ControlValueAccessor {
   }
 
   public updateMinute(value: number): void {
-    if (value == null) {
-      return;
-    }
-
-    let newValue: string;
-
-    if (Number.isNaN(value) || value == null) {
-      newValue = this.minute;
-    } else {
-      if (value > this.maxValue) {
-        newValue = this.minValue.toString();
-      } else if (value < this.minValue) {
-        newValue = this.maxValue.toString();
-      } else {
-        newValue = value.toString();
-      }
-    }
-
-    this.minute = newValue;
+    this.minute = value.toString();
     this.minuteField.value = this.minute;
     this.writeValue(this.policy);
   }
@@ -76,7 +58,7 @@ export class HourlyPolicyComponent implements ControlValueAccessor {
   @Input()
   public get policy(): HourlyPolicy {
     return {
-      minute: +this.minute
+      minute: +this.minute,
     };
   }
 
@@ -93,7 +75,7 @@ export class HourlyPolicyComponent implements ControlValueAccessor {
     this.propagateChange = fn;
   }
 
-  public registerOnTouched(): void { }
+  public registerOnTouched(): void {}
 
   public writeValue(value: any): void {
     if (value != null) {

@@ -1,8 +1,9 @@
-import { BaseModelInterface } from './base.model';
+import { BaseModel } from './base.model';
 import { AccountType } from './account.model';
 
-export interface User extends BaseModelInterface {
+export interface User extends BaseModel {
   account: string;
+  accountid: string;
   domain: string;
   domainid: string;
   firstname: string;
@@ -18,7 +19,3 @@ export interface User extends BaseModelInterface {
   apikey: string;
   secretkey: string;
 }
-
-export const getName = (user: User) => {
-  return `${user.firstname} ${user.lastname}`;
-};

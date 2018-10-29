@@ -1,33 +1,29 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  Input,
-  Output
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Rules } from '../../shared/components/security-group-builder/rules';
 import { SecurityGroupViewMode } from '../sg-view-mode';
 
 export interface SecurityGroupCreationParams {
   mode: SecurityGroupViewMode;
   data: {
-    name: string,
-    description: string
+    name: string;
+    description: string;
   };
-  rules?: Rules
+  rules?: Rules;
 }
 
 @Component({
   selector: 'cs-security-group-creation',
   templateUrl: 'security-group-creation.component.html',
   styleUrls: ['security-group-creation.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SecurityGroupCreationComponent {
-  @Input() public creationInProgress = false;
-  @Input() public mode: SecurityGroupViewMode;
-  @Output() public cancel = new EventEmitter();
-  @Output() public createSecurityGroup = new EventEmitter<SecurityGroupCreationParams>();
+  @Input()
+  public creationInProgress = false;
+  @Input()
+  public mode: SecurityGroupViewMode;
+  @Output()
+  public createSecurityGroup = new EventEmitter<SecurityGroupCreationParams>();
 
   public name = '';
   public description = '';
@@ -51,9 +47,9 @@ export class SecurityGroupCreationComponent {
       mode: this.mode,
       data: {
         name: this.name,
-        description: this.description
+        description: this.description,
       },
-      rules: this.securityRules
+      rules: this.securityRules,
     };
   }
 }

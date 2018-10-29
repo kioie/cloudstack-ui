@@ -7,12 +7,11 @@ import {
   OnChanges,
   Output,
   SimpleChanges,
-  ViewChild
+  ViewChild,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Color } from '../../models';
 import { PopoverTriggerDirective } from '../popover/popover-trigger.directive';
-
 
 @Component({
   selector: 'cs-color-picker',
@@ -22,24 +21,26 @@ import { PopoverTriggerDirective } from '../popover/popover-trigger.directive';
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => ColorPickerComponent),
-      multi: true
-    }
-  ]
+      multi: true,
+    },
+  ],
 })
-
 export class ColorPickerComponent implements OnChanges, ControlValueAccessor {
-  @Input() public colors: Array<Color>;
-  @Input() public colorsPerLine: number;
-  @Input() public containerWidth = 256;
-  @Input() public hasColorField = true;
-  @Output() public change = new EventEmitter();
-  @ViewChild(PopoverTriggerDirective) public popoverTrigger: PopoverTriggerDirective;
-  public colorWidth: number;
+  @Input()
+  public colors: Color[];
+  @Input()
+  public colorsPerLine: number;
+  @Input()
+  public containerWidth = 256;
+  @Input()
+  public hasColorField = true;
+  @Output()
+  public changed = new EventEmitter<Color>();
+  @ViewChild(PopoverTriggerDirective)
+  public popoverTrigger: PopoverTriggerDirective;
 
-  private _selectedColor: Color;
-  private _disabled: boolean;
-
-  @Input() public get disabled(): boolean {
+  @Input()
+  public get disabled(): boolean {
     return this._disabled;
   }
 
@@ -47,14 +48,8 @@ export class ColorPickerComponent implements OnChanges, ControlValueAccessor {
     this._disabled = coerceBooleanProperty(value);
   }
 
-  public ngOnChanges(changes: SimpleChanges): void {
-    if ('colors' in changes) {
-      this.colorsPerLine = null;
-    }
-    this.updateParams();
-  }
-
-  @Input() public get selectedColor(): Color {
+  @Input()
+  public get selectedColor(): Color {
     return this._selectedColor;
   }
 
@@ -63,10 +58,24 @@ export class ColorPickerComponent implements OnChanges, ControlValueAccessor {
     this.propagateChange(this._selectedColor);
   }
 
+  public colorWidth: number;
+
+  // tslint:disable-next-line:variable-name
+  private _selectedColor: Color;
+  // tslint:disable-next-line:variable-name
+  private _disabled: boolean;
+
+  public ngOnChanges(changes: SimpleChanges): void {
+    if ('colors' in changes) {
+      this.colorsPerLine = null;
+    }
+    this.updateParams();
+  }
+
   public selectColor(color: Color): void {
     this.selectedColor = color;
     this.popoverTrigger.closePopover();
-    this.change.emit(this._selectedColor);
+    this.changed.emit(this._selectedColor);
   }
 
   public handlePreviewClick(e: Event): void {
@@ -81,6 +90,7 @@ export class ColorPickerComponent implements OnChanges, ControlValueAccessor {
   }
 
   public propagateChange: any = () => {};
+
   public registerOnTouched(): any {}
 
   public registerOnChange(fn): void {

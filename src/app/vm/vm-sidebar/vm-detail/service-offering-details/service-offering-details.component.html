@@ -34,7 +34,7 @@
 
       <div *ngIf="offering?.created" class="row">
         <div>{{ 'VM_PAGE.VM_DETAILS.SERVICE_OFFERING.created' | translate }}</div>
-        <div>{{ offeringCreated | stringifyDate }}</div>
+        <div>{{ offeringCreated | csStringifyDate }}</div>
       </div>
 
       <div *ngIf="offering?.networkrate" class="row">
@@ -117,7 +117,7 @@
           [disabled]="!canActivate"
           (click)="changeServiceOffering()"
         >
-          <mat-icon>edit</mat-icon>
+          <mat-icon class="mdi-pencil"></mat-icon>
         </button>
       </div>
       <div class="card-right-button">
@@ -126,7 +126,7 @@
           (click)="toggleServiceOffering()"
           [class.open]="expandServiceOffering"
         >
-          <mat-icon>keyboard_arrow_down</mat-icon>
+          <mat-icon class="mdi-chevron-down"></mat-icon>
         </button>
       </div>
     </mat-card-actions>

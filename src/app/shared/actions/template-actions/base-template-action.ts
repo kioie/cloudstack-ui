@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
+
 import { DialogService } from '../../../dialog/dialog-service/dialog.service';
 import { Action } from '../../interfaces/action.interface';
 import { JobsNotificationService } from '../../services/jobs-notification.service';
 import { BaseTemplateModel } from '../../../template/shared/base-template.model';
-
 
 @Injectable()
 export abstract class BaseTemplateAction implements Action<BaseTemplateModel> {
@@ -13,7 +13,7 @@ export abstract class BaseTemplateAction implements Action<BaseTemplateModel> {
 
   constructor(
     protected dialogService: DialogService,
-    protected jobsNotificationService: JobsNotificationService
+    protected jobsNotificationService: JobsNotificationService,
   ) {}
 
   public abstract activate(template: BaseTemplateModel, params?: {}): Observable<any>;

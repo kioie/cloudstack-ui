@@ -1,19 +1,45 @@
 import { Taggable } from '../interfaces/taggable.interface';
-import { SnapshotTagKeys } from '../services/tags/snapshot-tag-keys';
-import { BaseModelInterface } from './base.model';
+import { snapshotTagKeys } from '../services/tags/snapshot-tag-keys';
+import { BaseModel } from './base.model';
 import { Tag } from './tag.model';
 
 import * as moment from 'moment';
 
-export interface Snapshot extends Taggable, BaseModelInterface {
+export enum SnapshotStates {
+  BackedUp = 'BackedUp',
+  Creating = 'Creating',
+  BackingUp = 'BackingUp',
+  Allocated = 'Allocated',
+  Error = 'Error',
+}
+
+export enum SnapshotPageMode {
+  Volume = 'volume',
+  VM = 'vm',
+}
+
+export enum SnapshotType {
+  Manual = 'MANUAL',
+  Hourly = 'HOURLY',
+  Daily = 'DAILY',
+  Weekly = 'WEEKLY',
+  Monthly = 'MONTHLY',
+}
+
+export interface Snapshot extends Taggable, BaseModel {
   description: string;
   id: string;
   created: string;
-  resourceType: string;
   physicalsize: number;
-  volumeid: string;
+  volumeid?: string;
+  virtualmachineid?: string;
+  snapshottype: SnapshotType;
   name: string;
-  tags: Array<Tag>;
+  tags: Tag[];
+  state: SnapshotStates;
+  revertable: boolean;
+  account?: string;
+  domain?: string;
 }
 
 export const getDateSnapshotCreated = (snapshot: Snapshot) => {
@@ -25,10 +51,9 @@ export const getSnapshotDescription = (snapshot: Snapshot) => {
     return '';
   }
 
-  const description = snapshot.tags.find(tag => tag.key === SnapshotTagKeys.description);
+  const description = snapshot.tags.find(tag => tag.key === snapshotTagKeys.description);
   if (description) {
     return description.value;
-  } else {
-    return '';
   }
+  return '';
 };

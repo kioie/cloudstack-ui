@@ -1,11 +1,12 @@
 import { Component, HostListener, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
+
 import { BaseDialogConfiguration } from '../dialog.service';
 
 export interface AskDialogConfiguration extends BaseDialogConfiguration {
-  actions: Array<DialogAction>;
+  actions: DialogAction[];
 }
 
 export interface DialogAction {
@@ -17,16 +18,15 @@ export interface DialogAction {
 @Component({
   selector: 'cs-ask-dialog',
   templateUrl: 'ask-dialog.component.html',
-  styleUrls: ['ask-dialog.component.scss']
+  styleUrls: ['ask-dialog.component.scss'],
 })
 export class AskDialogComponent {
-
   public config: AskDialogConfiguration;
 
   constructor(
     public dialogRef: MatDialogRef<AskDialogConfiguration>,
     private translateService: TranslateService,
-    @Inject(MAT_DIALOG_DATA) data
+    @Inject(MAT_DIALOG_DATA) data,
   ) {
     this.config = data.config;
   }
@@ -34,12 +34,11 @@ export class AskDialogComponent {
   public get translatedMessage(): Observable<string> {
     if (typeof this.config.message === 'string') {
       return this.translateService.get(this.config.message);
-    } else {
-      return this.translateService.get(
-        this.config.message.translationToken,
-        this.config.message.interpolateParams
-      );
     }
+    return this.translateService.get(
+      this.config.message.translationToken,
+      this.config.message.interpolateParams,
+    );
   }
 
   public actionClicked(action: DialogAction): void {

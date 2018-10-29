@@ -32,6 +32,7 @@ import 'core-js/es6/map';
 import 'core-js/es6/set';
 import 'core-js/es6/weak-map';
 import 'core-js/es7/object';
+import 'core-js/es7/array';
 /** IE10 and IE11 requires the following for NgClass support on SVG elements */
 // import 'classlist.js';  // Run `npm install --save classlist.js`.
 /** IE10 and IE11 requires the following to support `@angular/animation`. */
@@ -58,26 +59,9 @@ import 'zone.js/dist/zone'; // Included with Angular CLI.
  * Need to import at least one locale-data with intl.
  */
 // import 'intl/locale-data/jsonp/en';
-// instance operator imports ( e.g. observable.map )
-import 'rxjs/add/operator/catch';
-import 'rxjs/add/operator/combineLatest';
-import 'rxjs/add/operator/do';
-import 'rxjs/add/operator/debounceTime';
-import 'rxjs/add/operator/mapTo';
-import 'rxjs/add/operator/onErrorResumeNext';
-import 'rxjs/add/operator/distinctUntilChanged';
-import 'rxjs/add/operator/finally';
-import 'rxjs/add/operator/pluck';
-import 'rxjs/add/operator/filter';
-import 'rxjs/add/operator/takeUntil';
-import 'rxjs/add/operator/switchMapTo';
-import 'rxjs/add/operator/withLatestFrom';
-import 'rxjs/add/operator/toPromise';
-// static operator imports ( e.g. Observable.merge )
-import 'rxjs/add/observable/merge';
-import 'rxjs/add/observable/throw';
-import 'rxjs/add/observable/fromEvent';
-import 'rxjs/add/observable/forkJoin';
-import 'rxjs/add/observable/combineLatest';
-import 'rxjs/add/operator/concatMap';
-import 'rxjs/add/operator/mergeMap';
+
+/**
+ * Add global to window, assigning the value of window itself.
+ * see https://github.com/angular/angular-cli/issues/9827#issuecomment-386154063
+ */
+(window as any).global = window;

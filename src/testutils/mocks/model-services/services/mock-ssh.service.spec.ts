@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable, of } from 'rxjs';
 import { SSHKeyPair } from '../../../../app/shared/models';
 
-
-const sshKeyPairs: Array<SSHKeyPair> = require('../fixtures/sshKeyPairs.json');
+const sshKeyPairs: SSHKeyPair[] = require('../fixtures/sshKeyPairs.json');
 
 @Injectable()
 export class MockSSHKeyPairService {
-  public getList(): Observable<Array<SSHKeyPair>> {
-    return Observable.of(sshKeyPairs);
+  public getList(): Observable<SSHKeyPair[]> {
+    return of(sshKeyPairs);
   }
 }

@@ -1,4 +1,4 @@
-import { BaseModelInterface } from './base.model';
+import { BaseModel } from './base.model';
 
 export const enum ResourceType {
   Instance, // Number of instances a user can create
@@ -12,19 +12,13 @@ export const enum ResourceType {
   CPU, // Number of CPU an account can allocate for his resources
   Memory, // Amount of RAM an account can allocate for his resources
   PrimaryStorage, // Total primary storage space (in GiB) a user can use
-  SecondaryStorage // Total secondary storage space (in GiB) a user can use
+  SecondaryStorage, // Total secondary storage space (in GiB) a user can use
 }
 
-export interface ResourceLimit extends BaseModelInterface {
-  id: string;
+export interface ResourceLimit extends BaseModel {
+  account: string;
+  domain: string;
+  domainid: string;
   max: number;
   resourcetype: number;
 }
-
-export const updateLimitMax = (limit: ResourceLimit): ResourceLimit => {
-  const fixedJson = { ...limit };
-  if (limit.max === -1) {
-    fixedJson['max'] = Infinity;
-  }
-  return fixedJson;
-};

@@ -1,18 +1,19 @@
-import { BaseModelInterface } from './base.model';
+import { BaseModel } from './base.model';
 
-export const ResourceTypes = {
+export const resourceTypes = {
   USER: 'User',
-  VM: 'UserVm'
+  VM: 'UserVm',
 };
 
-export const DeletionMark = {
+export const deletionMark = {
   TAG: 'status',
-  VALUE: 'removed'
+  VALUE: 'removed',
 };
 
 export const defaultCategoryName = 'Common';
 
-export interface Tag extends BaseModelInterface {
+// Get rid of BaseModel interface, tags does not have id
+export interface Tag extends BaseModel {
   account?: string;
   domain?: string;
   domainid?: string;
@@ -34,5 +35,8 @@ export const keyWithoutCategory = (tag: Tag): string => {
     return tag.key;
   }
 
-  return tag.key.split('.').splice(1).join('.');
+  return tag.key
+    .split('.')
+    .splice(1)
+    .join('.');
 };

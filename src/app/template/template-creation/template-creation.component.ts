@@ -1,15 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+
 import { Hypervisor, OsType, Zone } from '../../shared';
-import { Account, isRootAdmin } from '../../shared/models/account.model';
-import { Snapshot } from '../../shared/models/snapshot.model';
-import { TemplateGroup } from '../../shared/models/template-group.model';
+import { Account, ImageGroup, isRootAdmin, Snapshot } from '../../shared/models';
 import { HypervisorService } from '../../shared/services/hypervisor.service';
-import { Language } from '../../shared/services/language.service';
-import {
-  CreateTemplateBaseParams,
-  TemplateResourceType
-} from '../shared/base-template.service';
+import { CreateTemplateBaseParams, templateResourceType } from '../shared/base-template.service';
+import { Language } from '../../shared/types';
 
 interface TemplateFormat {
   name: string;
@@ -19,25 +15,31 @@ interface TemplateFormat {
 @Component({
   selector: 'cs-template-creation',
   templateUrl: 'template-creation.component.html',
-  styleUrls: ['template-creation.component.scss']
+  styleUrls: ['template-creation.component.scss'],
 })
 export class TemplateCreationComponent implements OnInit {
-  @Input() public mode: string;
-  @Input() public account: Account;
-  @Input() public osTypes: Array<OsType>;
-  @Input() public zones: Array<Zone>;
-  @Input() public isLoading: boolean;
-  @Input() public groups: Array<TemplateGroup>;
-  @Input() public snapshot?: Snapshot;
+  @Input()
+  public mode: string;
+  @Input()
+  public account: Account;
+  @Input()
+  public osTypes: OsType[];
+  @Input()
+  public zones: Zone[];
+  @Input()
+  public groups: ImageGroup[];
+  @Input()
+  public snapshot?: Snapshot;
 
-  @Output() public onCreateTemplate = new EventEmitter<CreateTemplateBaseParams>();
+  @Output()
+  public templateCreated = new EventEmitter<CreateTemplateBaseParams>();
 
   public name: string;
   public displayText: string;
   public osTypeId: string;
   public url: string;
   public zoneId: string;
-  public templateGroup: TemplateGroup;
+  public templateGroup: ImageGroup;
   public isExtractable: boolean;
   public hypervisor: string;
   public isPublic: boolean;
@@ -50,8 +52,7 @@ export class TemplateCreationComponent implements OnInit {
   public passwordEnabled: boolean;
   public dynamicallyScalable: boolean;
 
-
-  public hypervisors: Array<Hypervisor>;
+  public hypervisors: Hypervisor[];
 
   public formats: TemplateFormat[] = [
     { name: 'VHD', hypervisors: ['XenServer', 'Hyperv', 'KVM'] },
@@ -61,7 +62,7 @@ export class TemplateCreationComponent implements OnInit {
     { name: 'VMDK', hypervisors: ['KVM'] },
     { name: 'BareMetal', hypervisors: ['BareMetal'] },
     { name: 'TAR', hypervisors: ['LXC'] },
-    { name: 'VHDX', hypervisors: ['Hyperv'] }
+    { name: 'VHDX', hypervisors: ['Hyperv'] },
   ];
   public visibleFormats: TemplateFormat[];
 
@@ -72,13 +73,10 @@ export class TemplateCreationComponent implements OnInit {
   }
 
   public get TemplateResourceType() {
-    return TemplateResourceType;
+    return templateResourceType;
   }
 
-  constructor(
-    private hypervisorService: HypervisorService,
-    private translate: TranslateService,
-  ) {
+  constructor(private hypervisorService: HypervisorService, private translate: TranslateService) {
     this.visibleFormats = this.formats;
   }
 
@@ -88,7 +86,7 @@ export class TemplateCreationComponent implements OnInit {
   }
 
   public getHypervisors() {
-    this.hypervisorService.getList().subscribe((hypervisors) => {
+    this.hypervisorService.getList().subscribe(hypervisors => {
       this.hypervisors = hypervisors;
     });
   }
@@ -98,15 +96,13 @@ export class TemplateCreationComponent implements OnInit {
   }
 
   public filterFormats(formats: TemplateFormat[], hypervisor: string) {
-    return hypervisor
-      ? formats.filter(f => f.hypervisors.find(h => h === hypervisor))
-      : formats;
+    return hypervisor ? formats.filter(f => f.hypervisors.find(h => h === hypervisor)) : formats;
   }
 
   public get modeTranslationToken(): string {
     const modeTranslations = {
-      'TEMPLATE': 'TEMPLATE_PAGE.TEMPLATE_CREATION.NEW_TEMPLATE',
-      'ISO': 'TEMPLATE_PAGE.TEMPLATE_CREATION.NEW_ISO'
+      TEMPLATE: 'TEMPLATE_PAGE.TEMPLATE_CREATION.NEW_TEMPLATE',
+      ISO: 'TEMPLATE_PAGE.TEMPLATE_CREATION.NEW_ISO',
     };
 
     return modeTranslations[this.mode.toUpperCase()];
@@ -130,12 +126,12 @@ export class TemplateCreationComponent implements OnInit {
       params['snapshotId'] = this.snapshot.id;
     }
 
-    if (this.mode === TemplateResourceType.template) {
+    if (this.mode === templateResourceType.template) {
       params['passwordEnabled'] = this.passwordEnabled;
-      params['isDynamicallyScalable'] = this.dynamicallyScalable;
-      params['entity'] = TemplateResourceType.template;
+      params['isdynamicallyscalable'] = this.dynamicallyScalable;
+      params['entity'] = templateResourceType.template;
     } else {
-      params['entity'] = TemplateResourceType.iso;
+      params['entity'] = templateResourceType.iso;
     }
 
     if (this.showAdditional) {
@@ -151,7 +147,7 @@ export class TemplateCreationComponent implements OnInit {
       }
     }
 
-    this.onCreateTemplate.emit(params);
+    this.templateCreated.emit(params);
   }
 
   public get isRootAdmin(): boolean {

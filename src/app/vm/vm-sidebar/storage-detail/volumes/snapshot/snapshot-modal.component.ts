@@ -1,51 +1,63 @@
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { MatTableDataSource } from '@angular/material';
+
+import { getDateSnapshotCreated, Snapshot, Volume } from '../../../../../shared/models';
 import {
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  Output
-} from '@angular/core';
-import {
-  TableDatabase,
-  TableDataSource
-} from '../../../../../shared/components/table/table';
-import { getDateSnapshotCreated, Volume } from '../../../../../shared/models';
-import {
-  SnapshotAction,
-  SnapshotActionsService
-} from '../../../../../snapshot/snapshot-actions.service';
-import { Snapshot } from '../../../../../shared/models/snapshot.model';
+  SnapshotActions,
+  SnapshotActionService,
+} from '../../../../../snapshot/snapshots-page/snapshot-list-item/snapshot-actions/snapshot-action.service';
 
 @Component({
   selector: 'cs-snapshot-modal',
   templateUrl: 'snapshot-modal.component.html',
-  styleUrls: ['snapshot-modal.component.scss']
+  styleUrls: ['snapshot-modal.component.scss'],
 })
 export class SnapshotModalComponent implements OnChanges {
   public displayedColumns = ['name', 'date', 'actions'];
-  public dataBase: TableDatabase;
-  public dataSource: TableDataSource | null;
-  @Input() public volume: Volume;
-  @Output() public onSnapshotDelete = new EventEmitter<Snapshot>();
+  public dataSource: MatTableDataSource<Snapshot>;
+  @Input()
+  public volume: Volume;
+  @Output()
+  public templateCreated: EventEmitter<Snapshot> = new EventEmitter<Snapshot>();
+  @Output()
+  public volumeCreated: EventEmitter<Snapshot> = new EventEmitter<Snapshot>();
+  @Output()
+  public snapshotReverted: EventEmitter<Snapshot> = new EventEmitter<Snapshot>();
+  @Output()
+  public snapshotDeleted: EventEmitter<Snapshot> = new EventEmitter<Snapshot>();
 
-  constructor(
-    public snapshotActionsService: SnapshotActionsService,
-  ) {
-    this.dataBase = new TableDatabase();
-    this.dataSource = new TableDataSource(this.dataBase);
+  constructor(public snapshotActionsService: SnapshotActionService) {
+    this.dataSource = new MatTableDataSource<Snapshot>([]);
   }
 
-  public ngOnChanges() {
-    this.dataBase.update(this.volume.snapshots);
+  public ngOnChanges(changes: SimpleChanges) {
+    const volume = changes['volume'];
+    if (volume) {
+      this.dataSource.data = volume.currentValue.snapshots;
+    }
   }
 
-  public onAction(action: SnapshotAction, snapshot: Snapshot) {
-    action.activate(snapshot).subscribe(
-      () => {
-        if (action.command === 'delete') {
-          this.onSnapshotDelete.emit(snapshot);
-        }
-      });
+  public onAction(action, snapshot: Snapshot) {
+    switch (action.command) {
+      case SnapshotActions.CreateTemplate: {
+        this.templateCreated.emit(snapshot);
+        break;
+      }
+      case SnapshotActions.CreateVolume: {
+        this.volumeCreated.emit(snapshot);
+        break;
+      }
+      case SnapshotActions.Revert: {
+        this.snapshotReverted.emit(snapshot);
+        break;
+      }
+      case SnapshotActions.Delete: {
+        this.snapshotDeleted.emit(snapshot);
+        break;
+      }
+      default:
+        break;
+    }
   }
 
   public snapshotCreatedDate(snapshot: Snapshot) {

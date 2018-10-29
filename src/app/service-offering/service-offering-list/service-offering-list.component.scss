@@ -1,16 +1,31 @@
 h4, h5 {
   margin: 10px;
 }
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 table {
-  thead {
-    text-align: left;
+  width: 100%;
+}
+
+th, td {
+  min-width: 100px;
+
+  &.mat-column-name {
+    min-width: 150px;
   }
-  tbody {
-    cursor: pointer;
+
+  &.mat-column-radioButton {
+    min-width: 48px;
+    max-width: 48px;
+    width: 48px;
   }
-  td.name-text, th.name-text, th.field {
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+}
+
+tr {
+  cursor: pointer;
 }

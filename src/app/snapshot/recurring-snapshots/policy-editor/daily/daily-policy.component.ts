@@ -1,9 +1,9 @@
 import { ChangeDetectorRef, Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { TimeFormat } from '../../../../shared/services/language.service';
-import { DayPeriodName } from '../../day-period/day-period.component';
-import { Time } from '../../time-picker/time-picker.component';
 
+import { DayPeriodName } from '../../../../shared/components/day-period/day-period.component';
+import { Time } from '../../../../shared/components/time-picker/time-picker.component';
+import { TimeFormat } from '../../../../shared/types';
 
 export type DailyPolicy = Time;
 
@@ -14,15 +14,17 @@ export type DailyPolicy = Time;
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => DailyPolicyComponent),
-      multi: true
-    }
-  ]
+      multi: true,
+    },
+  ],
 })
 export class DailyPolicyComponent implements ControlValueAccessor {
-  @Input() public timeFormat: TimeFormat;
+  @Input()
+  public timeFormat: TimeFormat;
+  // tslint:disable-next-line:variable-name
   public _time: Time;
 
-  public periods: Array<DayPeriodName>;
+  public periods: DayPeriodName[];
 
   @Input()
   public get policy(): DailyPolicy {
@@ -43,7 +45,7 @@ export class DailyPolicyComponent implements ControlValueAccessor {
     this.propagateChange = fn;
   }
 
-  public registerOnTouched(): void { }
+  public registerOnTouched(): void {}
 
   public writeValue(value: any): void {
     if (value) {

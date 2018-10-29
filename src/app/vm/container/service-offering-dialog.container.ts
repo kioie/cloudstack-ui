@@ -1,26 +1,18 @@
-import {
-  Component,
-  Inject,
-  OnInit,
-  AfterViewInit,
-  ChangeDetectorRef
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
-import { Store } from '@ngrx/store';
+import { select, Store } from '@ngrx/store';
 import { DialogService } from '../../dialog/dialog-service/dialog.service';
 import * as accountTagsActions from '../../reducers/account-tags/redux/account-tags.actions';
-import * as fromAccountTags from '../../reducers/account-tags/redux/account-tags.reducers';
-import { State } from '../../reducers/index';
-import * as soGroupActions from '../../reducers/service-offerings/redux/service-offering-class.actions';
-import * as fromSOClasses from '../../reducers/service-offerings/redux/service-offering-class.reducers';
-
+import { State } from '../../reducers';
+// tslint:disable-next-line
+import { Account, accountResourceType } from '../../shared/models/account.model';
+import { VirtualMachine, VmState } from '../shared/vm.model';
+import { configSelectors, UserTagsActions } from '../../root-store';
 import * as serviceOfferingActions from '../../reducers/service-offerings/redux/service-offerings.actions';
 import * as fromServiceOfferings from '../../reducers/service-offerings/redux/service-offerings.reducers';
 import * as vmActions from '../../reducers/vm/redux/vm.actions';
 import * as zoneActions from '../../reducers/zones/redux/zones.actions';
-// tslint:disable-next-line
-import { Account, AccountResourceType } from '../../shared/models/account.model';
-import { VirtualMachine, VmState } from '../shared/vm.model';
+import { selectFilteredOfferings } from '../selectors';
 
 @Component({
   selector: 'cs-service-offering-dialog-container',
@@ -29,30 +21,25 @@ import { VirtualMachine, VmState } from '../shared/vm.model';
       [serviceOfferings]="offerings$ | async"
       [classes]="classes$ | async"
       [selectedClasses]="selectedClasses$ | async"
-      [classTags]="classTags$ | async"
       [viewMode]="viewMode$ | async"
       [query]="query$ | async"
       [isVmRunning]="isVmRunning()"
-      [serviceOfferingId]="virtualMachine.serviceOfferingId"
-      [restrictions]="customOfferingRestrictions$ | async"
-      [defaultParams]="defaultParams$ | async"
-      (onServiceOfferingChange)="changeServiceOffering($event)"
-      (onServiceOfferingUpdate)="updateServiceOffering($event)"
-      (viewModeChange)="onViewModeChange($event)"
-      (selectedClassesChange)="onSelectedClassesChange($event)"
+      [virtualMachine]="virtualMachine"
+      [serviceOfferingId]="virtualMachine.serviceofferingid"
+      (serviceOfferingChanged)="changeServiceOffering($event)"
+      (serviceOfferingUpdated)="updateServiceOffering($event)"
+      (viewModeChanged)="onViewModeChange($event)"
+      (selectedClassesChanged)="onSelectedClassesChange($event)"
       (queryChange)="onQueryChange($event)"
     >
     </cs-service-offering-dialog>`,
 })
 export class ServiceOfferingDialogContainerComponent implements OnInit, AfterViewInit {
-  readonly offerings$ = this.store.select(fromServiceOfferings.selectFilteredOfferings);
-  readonly customOfferingRestrictions$ = this.store.select(fromServiceOfferings.getCustomRestrictions);
-  readonly query$ = this.store.select(fromServiceOfferings.filterQuery);
-  readonly defaultParams$ = this.store.select(fromServiceOfferings.getDefaultParams);
-  readonly classes$ = this.store.select(fromSOClasses.selectAll);
-  readonly selectedClasses$ = this.store.select(fromServiceOfferings.filterSelectedClasses);
-  readonly classTags$ = this.store.select(fromAccountTags.selectServiceOfferingClassTags);
-  readonly viewMode$ = this.store.select(fromServiceOfferings.filterSelectedViewMode);
+  readonly offerings$ = this.store.pipe(select(selectFilteredOfferings));
+  readonly query$ = this.store.pipe(select(fromServiceOfferings.filterQuery));
+  readonly classes$ = this.store.pipe(select(configSelectors.get('computeOfferingClasses')));
+  readonly selectedClasses$ = this.store.pipe(select(fromServiceOfferings.filterSelectedClasses));
+  readonly viewMode$ = this.store.pipe(select(fromServiceOfferings.filterSelectedViewMode));
 
   public virtualMachine: VirtualMachine;
   public user: Account;
@@ -62,19 +49,19 @@ export class ServiceOfferingDialogContainerComponent implements OnInit, AfterVie
     public dialogService: DialogService,
     public dialogRef: MatDialogRef<ServiceOfferingDialogContainerComponent>,
     private store: Store<State>,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
   ) {
     this.virtualMachine = data.vm;
   }
 
   public ngOnInit() {
-    this.store.dispatch(new zoneActions.LoadSelectedZone(this.virtualMachine.zoneId));
-    this.store.dispatch(new serviceOfferingActions.LoadOfferingAvailabilityRequest());
-    this.store.dispatch(new serviceOfferingActions.LoadDefaultParamsRequest());
-    this.store.dispatch(new serviceOfferingActions.LoadCustomRestrictionsRequest());
-    this.store.dispatch(new serviceOfferingActions.ServiceOfferingsFilterUpdate(fromServiceOfferings.initialFilters));
-    this.store.dispatch(new soGroupActions.LoadServiceOfferingClassRequest());
-    this.store.dispatch(new accountTagsActions.LoadAccountTagsRequest({ resourcetype: AccountResourceType }));
+    this.store.dispatch(new zoneActions.LoadSelectedZone(this.virtualMachine.zoneid));
+    this.store.dispatch(
+      new serviceOfferingActions.ServiceOfferingsFilterUpdate(fromServiceOfferings.initialFilters),
+    );
+    this.store.dispatch(
+      new accountTagsActions.LoadAccountTagsRequest({ resourcetype: accountResourceType }),
+    );
   }
 
   ngAfterViewInit() {
@@ -82,28 +69,34 @@ export class ServiceOfferingDialogContainerComponent implements OnInit, AfterVie
   }
 
   public onViewModeChange(selectedViewMode: string) {
-    this.store.dispatch(new serviceOfferingActions.ServiceOfferingsFilterUpdate({ selectedViewMode }));
+    this.store.dispatch(
+      new serviceOfferingActions.ServiceOfferingsFilterUpdate({ selectedViewMode }),
+    );
   }
 
   public onSelectedClassesChange(selectedClasses: string[]) {
-    this.store.dispatch(new serviceOfferingActions.ServiceOfferingsFilterUpdate({ selectedClasses }));
+    this.store.dispatch(
+      new serviceOfferingActions.ServiceOfferingsFilterUpdate({ selectedClasses }),
+    );
   }
 
   public onQueryChange(query: string) {
     this.store.dispatch(new serviceOfferingActions.ServiceOfferingsFilterUpdate({ query }));
   }
 
-  public updateServiceOffering(serviceOffering) {
-    if (serviceOffering.iscustomized) {
-      this.store.dispatch(new serviceOfferingActions.UpdateCustomServiceOffering(serviceOffering));
+  public updateServiceOffering(offering) {
+    if (offering.iscustomized) {
+      this.store.dispatch(new UserTagsActions.UpdateCustomServiceOfferingParams({ offering }));
     }
   }
 
   public changeServiceOffering(serviceOffering) {
-    this.store.dispatch(new vmActions.ChangeServiceOffering({
-      vm: this.virtualMachine,
-      offering: serviceOffering
-    }));
+    this.store.dispatch(
+      new vmActions.ChangeServiceOffering({
+        vm: this.virtualMachine,
+        offering: serviceOffering,
+      }),
+    );
     this.dialogRef.close();
   }
 

@@ -1,8 +1,4 @@
-import {
-  EventEmitter,
-  OnChanges,
-  SimpleChanges
-} from '@angular/core';
+import { EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { MatMenuTrigger } from '@angular/material';
 import { AuthService } from '../../shared/services/auth.service';
 import { BaseTemplateModel } from '../shared';
@@ -35,6 +31,6 @@ export class TemplateComponent implements OnChanges {
   }
 
   public get isSelf(): boolean {
-    return this.authService.user.username === this.item.account;
+    return this.authService.user.account === this.item.account;
   }
 }

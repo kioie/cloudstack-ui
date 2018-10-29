@@ -1,13 +1,6 @@
-import {
-  createFeatureSelector,
-  createSelector
-} from '@ngrx/store';
-import {
-  createEntityAdapter,
-  EntityAdapter,
-  EntityState
-} from '@ngrx/entity';
-import * as event from './events.actions';
+import { createFeatureSelector, createSelector } from '@ngrx/store';
+import { createEntityAdapter, EntityAdapter, EntityState } from '@ngrx/entity';
+import * as eventActions from './events.actions';
 import { Event } from '../event.model';
 import * as fromAccounts from '../../reducers/accounts/redux/accounts.reducers';
 import moment = require('moment');
@@ -20,15 +13,15 @@ import moment = require('moment');
  * any additional interface properties.
  */
 export interface State extends EntityState<Event> {
-  loading: boolean,
-  eventTypes: string[],
+  loading: boolean;
+  eventTypes: string[];
   filters: {
-    date: Date,
-    selectedTypes: string[],
-    selectedLevels: string[],
-    selectedAccountIds: string[],
-    query: string
-  }
+    date: Date;
+    selectedTypes: string[];
+    selectedLevels: string[];
+    selectedAccountIds: string[];
+    query: string;
+  };
 }
 
 export interface EventsState {
@@ -49,7 +42,7 @@ export const reducers = {
  */
 export const adapter: EntityAdapter<Event> = createEntityAdapter<Event>({
   selectId: (item: Event) => item.id,
-  sortComparer: false
+  sortComparer: false,
 });
 
 /** getInitialState returns the default initial state
@@ -64,36 +57,34 @@ export const initialState: State = adapter.getInitialState({
     selectedTypes: [],
     selectedLevels: [],
     selectedAccountIds: [],
-    query: ''
-  }
+    query: '',
+  },
 });
 
-export function reducer(
-  state = initialState,
-  action: event.Actions
-): State {
+export function reducer(state = initialState, action: eventActions.Actions): State {
   switch (action.type) {
-    case event.LOAD_EVENTS_REQUEST: {
+    case eventActions.LOAD_EVENTS_REQUEST: {
       return {
         ...state,
-        loading: true
+        loading: true,
       };
     }
-    case event.EVENT_FILTER_UPDATE: {
+    case eventActions.EVENT_FILTER_UPDATE: {
       return {
         ...state,
         filters: {
           ...state.filters,
-          ...action.payload
-        }
+          ...action.payload,
+        },
       };
     }
-    case event.LOAD_EVENTS_RESPONSE: {
-
+    case eventActions.LOAD_EVENTS_RESPONSE: {
       const events = action.payload;
-      const types = Object.keys(events.reduce((memo, event) => {
-        return { ...memo, [event.type]: event.type };
-      }, {}));
+      const types = Object.keys(
+        events.reduce((memo, event) => {
+          return { ...memo, [event.type]: event.type };
+        }, {}),
+      );
 
       return {
         /**
@@ -105,10 +96,9 @@ export function reducer(
          */
         ...adapter.addAll(events, state),
         eventTypes: types,
-        loading: false
+        loading: false,
       };
     }
-
 
     default: {
       return state;
@@ -116,62 +106,29 @@ export function reducer(
   }
 }
 
-
 export const getEventsState = createFeatureSelector<EventsState>('events');
 
-export const getEventsEntitiesState = createSelector(
-  getEventsState,
-  state => state.list
-);
+export const getEventsEntitiesState = createSelector(getEventsState, state => state.list);
 
-export const {
-  selectIds,
-  selectEntities,
-  selectAll,
-  selectTotal,
-} = adapter.getSelectors(getEventsEntitiesState);
-
-export const isLoading = createSelector(
+export const { selectIds, selectEntities, selectAll, selectTotal } = adapter.getSelectors(
   getEventsEntitiesState,
-  state => state.loading
 );
 
-export const eventTypes = createSelector(
-  getEventsEntitiesState,
-  state => state.eventTypes
-);
+export const isLoading = createSelector(getEventsEntitiesState, state => state.loading);
 
+export const eventTypes = createSelector(getEventsEntitiesState, state => state.eventTypes);
 
-export const filters = createSelector(
-  getEventsEntitiesState,
-  state => state.filters
-);
+export const filters = createSelector(getEventsEntitiesState, state => state.filters);
 
-export const filterDate = createSelector(
-  filters,
-  state => state.date
-);
+export const filterDate = createSelector(filters, state => state.date);
 
+export const filterQuery = createSelector(filters, state => state.query);
 
-export const filterQuery = createSelector(
-  filters,
-  state => state.query
-);
+export const filterSelectedTypes = createSelector(filters, state => state.selectedTypes);
 
-export const filterSelectedTypes = createSelector(
-  filters,
-  state => state.selectedTypes
-);
+export const filterSelectedLevels = createSelector(filters, state => state.selectedLevels);
 
-export const filterSelectedLevels = createSelector(
-  filters,
-  state => state.selectedLevels
-);
-
-export const filterSelectedAccountIds = createSelector(
-  filters,
-  state => state.selectedAccountIds
-);
+export const filterSelectedAccountIds = createSelector(filters, state => state.selectedAccountIds);
 
 export const selectFilteredEvents = createSelector(
   selectAll,
@@ -185,8 +142,9 @@ export const selectFilteredEvents = createSelector(
     const typeMap = selectedTypes.reduce((m, i) => ({ ...m, [i]: i }), {});
     const levelsMap = selectedLevels.reduce((m, i) => ({ ...m, [i]: i }), {});
 
-    const queryFilter = event => !query || event.description.toLowerCase()
-        .includes(queryLower) ||
+    const queryFilter = event =>
+      !query ||
+      event.description.toLowerCase().includes(queryLower) ||
       event.level.toLowerCase().includes(queryLower) ||
       event.type.toLowerCase().includes(queryLower) ||
       event.time.toLowerCase().includes(queryLower);
@@ -194,28 +152,27 @@ export const selectFilteredEvents = createSelector(
     const selectedTypesFilter = event => !selectedTypes.length || !!typeMap[event.type];
 
     const selectedLevelsFilter = event => {
-      return !selectedLevels.length ||
-        !!levelsMap[event.level];
+      return !selectedLevels.length || !!levelsMap[event.level];
     };
 
-    const accountsMap = selectedAccountIds
-      .reduce((memo, id) => {
-        const account = accountEntities[id];
-        if (account) {
-          return { ...memo, [`${account.name}_${account.domain}`]: account };
-        }
-        return memo;
-      }, {});
+    const accountsMap = selectedAccountIds.reduce((memo, id) => {
+      const account = accountEntities[id];
+      if (account) {
+        return { ...memo, [`${account.name}_${account.domain}`]: account };
+      }
+      return memo;
+    }, {});
 
-    const selectedAccountIdsFilter = event => !selectedAccountIds.length ||
-      accountsMap[`${event.account}_${event.domain}`];
+    const selectedAccountIdsFilter = event =>
+      !selectedAccountIds.length || accountsMap[`${event.account}_${event.domain}`];
 
     return events.filter(event => {
-      return queryFilter(event)
-        && selectedTypesFilter(event)
-        && selectedLevelsFilter(event)
-        && selectedAccountIdsFilter(event);
+      return (
+        queryFilter(event) &&
+        selectedTypesFilter(event) &&
+        selectedLevelsFilter(event) &&
+        selectedAccountIdsFilter(event)
+      );
     });
-  }
+  },
 );
-

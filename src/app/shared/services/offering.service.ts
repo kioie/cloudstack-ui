@@ -1,37 +1,17 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { select, Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
+import { map, withLatestFrom } from 'rxjs/operators';
+
 import { isOfferingLocal, Offering } from '../models/offering.model';
-import { Zone } from '../models';
+import { ServiceOfferingAvailability, Zone } from '../models';
 import { BaseBackendService } from './base-backend.service';
-import { ConfigService } from './config.service';
-
-
-export interface OfferingAvailability {
-  [zoneId: string]: {
-    filterOfferings: boolean;
-    diskOfferings: Array<string>;
-    serviceOfferings: Array<string>;
-  };
-}
-
-export interface OfferingCompatibilityPolicy {
-  offeringChangePolicy?: OfferingPolicy,
-  offeringChangePolicyIgnoreTags?: string[]
-}
-
-export enum OfferingPolicy {
-  CONTAINS_ALL = 'contains-all',
-  EXACTLY_MATCH = 'exactly-match',
-  NO_RESTRICTIONS = 'no-restrictions'
-}
+import { configSelectors, State } from '../../root-store';
 
 @Injectable()
 export abstract class OfferingService<T extends Offering> extends BaseBackendService<T> {
-  constructor(
-    protected http: HttpClient,
-    private configService: ConfigService
-  ) {
+  constructor(protected http: HttpClient, private store: Store<State>) {
     super(http);
   }
 
@@ -39,50 +19,45 @@ export abstract class OfferingService<T extends Offering> extends BaseBackendSer
     return super.get(id);
   }
 
-  public getList(params?: any): Observable<Array<T>> {
+  public getList(params?: any): Observable<T[]> {
     if (!params || !params.zone) {
       return super.getList(params);
     }
     const zone = params.zone;
-    const modifiedParams = Object.assign({}, params);
+    const modifiedParams = { ...params };
     delete modifiedParams.zone;
 
-    const offeringAvailability = this.configService.get('offeringAvailability');
-
-    return super.getList(modifiedParams)
-      .map(offeringList => {
-        return this.getOfferingsAvailableInZone(
-          offeringList,
-          offeringAvailability,
-          zone
-        );
-      });
+    return super.getList(modifiedParams).pipe(
+      withLatestFrom(this.store.pipe(select(configSelectors.get('serviceOfferingAvailability')))),
+      map(([offeringList, offeringAvailability]) =>
+        this.getOfferingsAvailableInZone(offeringList, offeringAvailability, zone),
+      ),
+    );
   }
 
   public getOfferingsAvailableInZone(
-    offeringList: Array<T>,
-    offeringAvailability: OfferingAvailability,
-    zone: Zone
-  ): Array<T> {
+    offeringList: T[],
+    offeringAvailability: ServiceOfferingAvailability,
+    zone: Zone,
+  ): T[] {
     if (!offeringAvailability.filterOfferings) {
       return offeringList;
     }
 
-    return offeringList
-      .filter(offering => {
-        const offeringAvailableInZone = this.isOfferingAvailableInZone(
-          offering,
-          offeringAvailability,
-          zone
-        );
-        const localStorageCompatibility = zone.localstorageenabled || !isOfferingLocal(offering);
-        return offeringAvailableInZone && localStorageCompatibility;
-      });
+    return offeringList.filter(offering => {
+      const offeringAvailableInZone = this.isOfferingAvailableInZone(
+        offering,
+        offeringAvailability,
+        zone,
+      );
+      const localStorageCompatibility = zone.localstorageenabled || !isOfferingLocal(offering);
+      return offeringAvailableInZone && localStorageCompatibility;
+    });
   }
 
   protected abstract isOfferingAvailableInZone(
     offering: Offering,
-    offeringAvailability: OfferingAvailability,
-    zone: Zone
+    offeringAvailability: ServiceOfferingAvailability,
+    zone: Zone,
   ): boolean;
 }

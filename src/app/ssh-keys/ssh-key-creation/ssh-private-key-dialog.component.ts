@@ -1,24 +1,23 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material';
 
-import { NotificationService } from '../../shared/services/notification.service';
-
+import { SnackBarService } from '../../core/services';
 
 @Component({
   selector: 'cs-ssh-private-key-dialog',
-  templateUrl: 'ssh-private-key-dialog.component.html'
+  templateUrl: 'ssh-private-key-dialog.component.html',
 })
 export class SshPrivateKeyDialogComponent {
   constructor(
     @Inject(MAT_DIALOG_DATA) public privateKey: string,
-    private notificationService: NotificationService
-  ) { }
+    private notificationService: SnackBarService,
+  ) {}
 
   public onCopySuccess(): void {
-    this.notificationService.message('CLIPBOARD.COPY_SUCCESS');
+    this.notificationService.open('CLIPBOARD.COPY_SUCCESS').subscribe();
   }
 
   public onCopyFail(): void {
-    this.notificationService.message('CLIPBOARD.COPY_FAIL');
+    this.notificationService.open('CLIPBOARD.COPY_FAIL').subscribe();
   }
 }

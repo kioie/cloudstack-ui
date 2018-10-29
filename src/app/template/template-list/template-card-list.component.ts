@@ -1,12 +1,7 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  Output
-} from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ListService } from '../../shared/components/list/list.service';
 import { Template } from '../shared';
-import { BaseTemplateModel } from '../shared/base-template.model';
+import { BaseTemplateModel, getPath } from '../shared/base-template.model';
 import { ViewMode } from '../../shared/components/view-mode-switch/view-mode-switch.component';
 import { TemplateCardItemComponent } from '../template/card-item/template-card-item.component';
 import { TemplateRowItemComponent } from '../template/row-item/template-row-item.component';
@@ -14,14 +9,19 @@ import { TemplateRowItemComponent } from '../template/row-item/template-row-item
 @Component({
   selector: 'cs-template-card-list',
   templateUrl: 'template-card-list.component.html',
-  styleUrls: ['template-list.component.scss']
+  styleUrls: ['template-list.component.scss'],
 })
 export class TemplateCardListComponent {
-  @Input() public templateList: Array<BaseTemplateModel>;
-  @Input() public query: string;
-  @Input() public groupings: string;
-  @Input() public mode: ViewMode;
-  @Output() public deleteTemplate = new EventEmitter();
+  @Input()
+  public templateList: BaseTemplateModel[];
+  @Input()
+  public query: string;
+  @Input()
+  public groupings: string;
+  @Input()
+  public mode: ViewMode;
+  @Output()
+  public deleteTemplate = new EventEmitter();
 
   public inputs;
   public outputs;
@@ -36,7 +36,7 @@ export class TemplateCardListComponent {
     };
     this.outputs = {
       onClick: this.selectTemplate,
-      deleteTemplate: this.removeTemplate
+      deleteTemplate: this.removeTemplate,
     };
   }
 
@@ -45,7 +45,7 @@ export class TemplateCardListComponent {
   }
 
   public selectTemplate(template: BaseTemplateModel): void {
-    this.listService.showDetails(`${template.path}/${template.id}`);
+    this.listService.showDetails(`${getPath(template)}/${template.id}`);
   }
 
   public removeTemplate(template: Template): void {

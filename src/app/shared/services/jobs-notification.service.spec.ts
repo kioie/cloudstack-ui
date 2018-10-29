@@ -1,16 +1,8 @@
 import { Injectable } from '@angular/core';
-import {
-  async,
-  inject,
-  TestBed
-} from '@angular/core/testing';
-import { Subject } from 'rxjs/Subject';
+import { async, inject, TestBed } from '@angular/core/testing';
+import { Subject } from 'rxjs';
 import { AuthService } from './auth.service';
-import {
-  INotificationStatus,
-  JobsNotificationService
-} from './jobs-notification.service';
-
+import { INotificationStatus, JobsNotificationService } from './jobs-notification.service';
 
 @Injectable()
 export class MockAuthService {
@@ -20,10 +12,7 @@ export class MockAuthService {
 describe('Jobs notification service', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      providers: [
-        JobsNotificationService,
-        { provide: AuthService, useClass: MockAuthService }
-      ]
+      providers: [JobsNotificationService, { provide: AuthService, useClass: MockAuthService }],
     });
   }));
 
@@ -33,67 +22,69 @@ describe('Jobs notification service', () => {
     expect(jobsNotificationService.notifications.length).toBe(1);
     expect(jobsNotificationService.notifications[0].message).toBe('new job');
 
-    jobsNotificationService.add({ id: '123', message: 'another job'});
+    jobsNotificationService.add('another job');
     expect(jobsNotificationService.notifications.length).toBe(2);
-    expect(jobsNotificationService.notifications[0].id).toBe('123');
     expect(jobsNotificationService.notifications[0].message).toBe('another job');
   }));
 
-  it('should modify existing notification', inject([JobsNotificationService], jobsNotificationService => {
-    jobsNotificationService.reset();
-    jobsNotificationService.add({ id: '0', message: 'new job'});
-    jobsNotificationService.add({ id: '1', message: 'another job'});
+  it('should update the status to "finished"', inject(
+    [JobsNotificationService],
+    jobsNotifications => {
+      jobsNotifications.reset();
+      const id = jobsNotifications.add('new job');
 
-    expect(jobsNotificationService.notifications[0].status).toBe(INotificationStatus.Pending);
+      jobsNotifications.finish({ id });
+      expect(jobsNotifications.notifications[0].status).toBe(INotificationStatus.Finished);
+    },
+  ));
 
-    jobsNotificationService.add({ id: '1', status: INotificationStatus.Finished });
-    expect(jobsNotificationService.notifications[0].status).toBe(INotificationStatus.Finished);
-  }));
+  it('should update the status to "failed"', inject(
+    [JobsNotificationService],
+    jobsNotifications => {
+      jobsNotifications.reset();
+      const id = jobsNotifications.add('new job');
 
-  it('should update the status to "finished"', inject([JobsNotificationService], jobsNotifications => {
-    jobsNotifications.reset();
-    const id = jobsNotifications.add('new job');
+      jobsNotifications.fail({ id });
+      expect(jobsNotifications.notifications[0].status).toBe(INotificationStatus.Failed);
+    },
+  ));
 
-    jobsNotifications.finish({ id });
-    expect(jobsNotifications.notifications[0].status).toBe(INotificationStatus.Finished);
-  }));
+  it('should remove notification by id if it ends', inject(
+    [JobsNotificationService],
+    jobsNotificationService => {
+      jobsNotificationService.reset();
+      jobsNotificationService.add('new job');
+      const id = jobsNotificationService.add('another job');
 
-  it('should update the status to "failed"', inject([JobsNotificationService], jobsNotifications => {
-    jobsNotifications.reset();
-    const id = jobsNotifications.add('new job');
+      jobsNotificationService.remove('non-existent');
+      expect(jobsNotificationService.notifications.length).toBe(2);
 
-    jobsNotifications.fail({ id });
-    expect(jobsNotifications.notifications[0].status).toBe(INotificationStatus.Failed);
-  }));
+      jobsNotificationService.remove(id); // operation in pending state
+      expect(jobsNotificationService.notifications.length).toBe(2);
 
-  it('should remove notification by id', inject([JobsNotificationService], jobsNotificationService => {
-    jobsNotificationService.reset();
-    jobsNotificationService.add({ id: '0', message: 'new job'});
-    jobsNotificationService.add({ id: '1', message: 'another job'});
+      jobsNotificationService.finish({ id, message: 'done' });
+      jobsNotificationService.remove(id);
+      expect(jobsNotificationService.notifications.length).toBe(1);
 
-    jobsNotificationService.remove('non-existent');
-    expect(jobsNotificationService.notifications.length).toBe(2);
+      expect(jobsNotificationService.notifications[0].message).toBe('new job');
+    },
+  ));
 
-    jobsNotificationService.add({ id: '0', status: INotificationStatus.Finished });
-    jobsNotificationService.remove('0');
+  it('should remove all finished jobs', inject(
+    [JobsNotificationService],
+    jobsNotificationService => {
+      jobsNotificationService.reset();
+      const id1 = jobsNotificationService.add('new job');
+      const id2 = jobsNotificationService.add('another job');
+      jobsNotificationService.add('another one');
 
-    expect(jobsNotificationService.notifications.length).toBe(1);
-    expect(jobsNotificationService.notifications[0].id).toBe('1');
-    expect(jobsNotificationService.notifications[0].message).toBe('another job');
-  }));
+      jobsNotificationService.finish({ id: id1, message: 'done' });
+      jobsNotificationService.finish({ id: id2, message: 'done' });
 
-  it('should remove all finished jobs', inject([JobsNotificationService], jobsNotificationService => {
-    jobsNotificationService.reset();
-    const id1 = jobsNotificationService.add('new job');
-    const id2 = jobsNotificationService.add('another job');
-    jobsNotificationService.add('another one');
+      jobsNotificationService.removeCompleted();
 
-    jobsNotificationService.add({ id: id1, status: INotificationStatus.Finished });
-    jobsNotificationService.add({ id: id2, status: INotificationStatus.Finished });
-
-    jobsNotificationService.removeCompleted();
-
-    expect(jobsNotificationService.notifications.length).toBe(1);
-    expect(jobsNotificationService.notifications[0].message).toBe('another one');
-  }));
+      expect(jobsNotificationService.notifications.length).toBe(1);
+      expect(jobsNotificationService.notifications[0].message).toBe('another one');
+    },
+  ));
 });

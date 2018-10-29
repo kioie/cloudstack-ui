@@ -1,19 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import {
-  MatButtonModule,
-  MatDialogModule,
-  MatIconModule,
-  MatInputModule,
-  MatProgressSpinnerModule,
-  MatSelectModule,
-  MatTabsModule,
-  MatTooltipModule
-} from '@angular/material';
-import { TranslateModule } from '@ngx-translate/core';
 
 import { SharedModule } from '../shared/shared.module';
+import { MaterialModule } from '../material/material.module';
+
 import {
   PulseCpuRamChartComponent,
   PulseDiskChartComponent,
@@ -26,24 +16,8 @@ import { VmPulseComponent } from './vm-pulse/vm-pulse.component';
 import { BaseChartDirective } from './charts/chart.directive';
 
 @NgModule({
-  imports: [
-    SharedModule,
-    CommonModule,
-    FormsModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTooltipModule,
-    MatDialogModule,
-    MatInputModule,
-    MatTabsModule,
-    MatSelectModule,
-    MatProgressSpinnerModule,
-    TranslateModule
-  ],
-  exports: [
-    BaseChartDirective,
-    VmPulseComponent
-  ],
+  imports: [CommonModule, SharedModule, MaterialModule],
+  exports: [BaseChartDirective, VmPulseComponent],
   providers: [PulseService],
   declarations: [
     BaseChartDirective,
@@ -52,9 +26,8 @@ import { BaseChartDirective } from './charts/chart.directive';
     PulseCpuRamChartComponent,
     PulseNetworkChartComponent,
     PulseDiskChartComponent,
-    VmPulseComponent
+    VmPulseComponent,
   ],
-  entryComponents: [VmPulseComponent]
+  entryComponents: [VmPulseComponent],
 })
-export class PulseModule {
-}
+export class PulseModule {}

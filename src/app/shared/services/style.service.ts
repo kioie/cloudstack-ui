@@ -1,25 +1,22 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
-import { ConfigService } from './config.service';
-import { UserTagService } from './tags/user-tag.service';
 
-interface Theme {
+export interface Theme {
   name: string;
   href: string;
   primaryColor: string;
 }
 
-export const themes: Array<Theme> = [
+export const themes: Theme[] = [
   {
     name: 'blue-red',
     href: 'css/themes/blue-red.css',
-    primaryColor: '#2196f3'
+    primaryColor: '#2196f3',
   },
   {
     name: 'indigo-pink',
     href: 'css/themes/indigo-pink.css',
-    primaryColor: '#3f51b5'
-  }
+    primaryColor: '#3f51b5',
+  },
 ];
 
 const preferredTheme = themes[0]; // the blue-red one is default
@@ -27,59 +24,35 @@ const preferredTheme = themes[0]; // the blue-red one is default
 @Injectable()
 export class StyleService {
   public styleElement: HTMLLinkElement;
-  private _activeTheme: Theme;
+  private activeTheme: Theme;
 
-  constructor(
-    private configService: ConfigService,
-    private userTagService: UserTagService
-  ) {
+  constructor() {
     this.initStyleSheet();
   }
 
-  public getTheme(): Observable<Theme> {
-    const defaultThemeName =
-      this.configService.get<string>('defaultThemeName');
-    return this.userTagService.getTheme()
-      .map(themeName => {
-        let theme = themes.find(t => t.name === themeName);
-        if (!theme) {
-          // if the tag has incorrect theme name, we fallback to default theme
-          // from the config
-          theme = themes.find(t => t.name === defaultThemeName);
-        }
+  public updateTheme(theme: Theme) {
+    // to prevent setting the theme when it's already active
+    const hasChanged = this.activeTheme && this.activeTheme.href !== theme.href;
+    // to prevent setting the default theme twice after user is
+    // logged in (when the app loads, the default theme loads with it and
+    // the linkElement has empty href, but the user can explicitly
+    // set the default theme in the tag)
+    const notPreferredAfterLogin = !this.styleElement.href && theme.name !== preferredTheme.name;
 
-        // if the config has incorrect theme name too, we just grab the first one
-
-        return theme || preferredTheme;
-      });
+    if (hasChanged || notPreferredAfterLogin) {
+      this.styleElement.href = theme.href;
+    }
+    this.activeTheme = theme;
   }
 
-  public setTheme(theme: Theme): Observable<string> {
-    this.updateTheme(theme);
-    return this.userTagService.setTheme(theme.name);
+  public useTheme(themeName: string) {
+    const newTheme = themes.find(theme => theme.name === themeName);
+    this.updateTheme(newTheme);
   }
 
   private initStyleSheet(): void {
     this.styleElement = document.createElement('link');
     this.styleElement.setAttribute('rel', 'stylesheet');
     document.head.appendChild(this.styleElement);
-  }
-
-  public updateTheme(theme: Theme) {
-    const { styleElement, _activeTheme } = this;
-
-    // to prevent setting the theme when it's already active
-    const hasChanged = _activeTheme && _activeTheme.href !== theme.href;
-    // to prevent setting the default theme twice after user is
-    // logged in (when the app loads, the default theme loads with it and
-    // the linkElement has empty href, but the user can explicitly
-    // set the default theme in the tag)
-    const notPreferredAfterLogin =
-      !styleElement.href && theme.name !== preferredTheme.name;
-
-    if (hasChanged || notPreferredAfterLogin) {
-      styleElement.href = theme.href;
-    }
-    this._activeTheme = theme;
   }
 }

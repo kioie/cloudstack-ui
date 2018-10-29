@@ -4,41 +4,37 @@ import {
   DiskOffering,
   ServiceOffering,
   SSHKeyPair,
-  Zone
+  Zone,
 } from '../../../app/shared/models';
 import { Iso, Template } from '../../../app/template/shared';
 
-
-const affinityGroups: Array<AffinityGroup> = require('./fixtures/affinityGroups.json');
-const diskOfferings: Array<DiskOffering> = require('./fixtures/diskOfferings.json');
-const isos: Array<Object> = require('./fixtures/isos.json');
-const securityGroupTemplates: Array<Object> = require(
-  './fixtures/securityGroupTemplates.json');
-const serviceOfferings: Array<ServiceOffering> = require(
-  './fixtures/serviceOfferings.json');
-const sshKeyPairs: Array<SSHKeyPair> = require('./fixtures/sshKeyPairs.json');
-const templates: Array<Object> = require('./fixtures/templates.json');
-const zones: Array<Object> = require('./fixtures/zones.json');
+const affinityGroups: AffinityGroup[] = require('./fixtures/affinityGroups.json');
+const diskOfferings: DiskOffering[] = require('./fixtures/diskOfferings.json');
+const isos: Iso[] = require('./fixtures/isos.json');
+const securityGroupTemplates: SecurityGroup[] = require('./fixtures/securityGroupTemplates.json');
+const serviceOfferings: ServiceOffering[] = require('./fixtures/serviceOfferings.json');
+const sshKeyPairs: SSHKeyPair[] = require('./fixtures/sshKeyPairs.json');
+const templates: Template[] = require('./fixtures/templates.json');
+const zones: Zone[] = require('./fixtures/zones.json');
 
 export class MockEntityData {
-  public affinityGroups: Array<AffinityGroup>;
-  public diskOfferings: Array<DiskOffering>;
-  public isos: Array<Iso>;
-  public securityGroupTemplates: Array<SecurityGroup>;
-  public serviceOfferings: Array<ServiceOffering>;
-  public sshKeyPairs: Array<SSHKeyPair>;
-  public templates: Array<Template>;
-  public zones: Array<Zone>;
+  public affinityGroups: AffinityGroup[];
+  public diskOfferings: DiskOffering[];
+  public isos: Iso[];
+  public securityGroupTemplates: SecurityGroup[];
+  public serviceOfferings: ServiceOffering[];
+  public sshKeyPairs: SSHKeyPair[];
+  public templates: Template[];
+  public zones: Zone[];
 
   constructor() {
     this.affinityGroups = affinityGroups;
     this.diskOfferings = diskOfferings;
-    this.isos = isos.map(json => new Iso(json));
-    this.securityGroupTemplates = securityGroupTemplates.map(
-      json => new SecurityGroup(json));
+    this.isos = isos;
+    this.securityGroupTemplates = securityGroupTemplates;
     this.serviceOfferings = serviceOfferings;
     this.sshKeyPairs = sshKeyPairs;
-    this.templates = templates.map(json => new Template(json));
-    this.zones = zones.map(json => json as Zone);
+    this.templates = templates;
+    this.zones = zones;
   }
 }

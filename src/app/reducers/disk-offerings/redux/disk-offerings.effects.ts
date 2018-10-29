@@ -1,30 +1,27 @@
 import { Injectable } from '@angular/core';
-import {
-  Actions,
-  Effect
-} from '@ngrx/effects';
-import { Observable } from 'rxjs/Observable';
-import * as diskOfferingActions from './disk-offerings.actions';
 import { Action } from '@ngrx/store';
+import { Actions, Effect, ofType } from '@ngrx/effects';
+import { Observable, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
+
+import * as diskOfferingActions from './disk-offerings.actions';
 import { DiskOfferingService } from '../../../shared/services/disk-offering.service';
-import { DiskOffering } from '../../../shared/models/disk-offering.model';
+import { DiskOffering } from '../../../shared/models';
 
 @Injectable()
 export class DiskOfferingEffects {
-
   @Effect()
-  loadOfferings$: Observable<Action> = this.actions$
-    .ofType(diskOfferingActions.LOAD_DISK_OFFERINGS_REQUEST)
-    .switchMap((action: diskOfferingActions.LoadOfferingsRequest) => {
-      return this.offeringService.getList(action.payload)
-        .map((offerings: DiskOffering[]) => {
+  loadOfferings$: Observable<Action> = this.actions$.pipe(
+    ofType(diskOfferingActions.LOAD_DISK_OFFERINGS_REQUEST),
+    switchMap((action: diskOfferingActions.LoadOfferingsRequest) => {
+      return this.offeringService.getList(action.payload).pipe(
+        map((offerings: DiskOffering[]) => {
           return new diskOfferingActions.LoadOfferingsResponse(offerings);
-        })
-        .catch(() => Observable.of(new diskOfferingActions.LoadOfferingsResponse([])));
-    });
+        }),
+        catchError(() => of(new diskOfferingActions.LoadOfferingsResponse([]))),
+      );
+    }),
+  );
 
-  constructor(
-    private actions$: Actions,
-    private offeringService: DiskOfferingService
-  ) { }
+  constructor(private actions$: Actions, private offeringService: DiskOfferingService) {}
 }

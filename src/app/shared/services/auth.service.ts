@@ -1,44 +1,43 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { Observable } from 'rxjs/Observable';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import { BackendResource } from '../decorators';
-import { BaseModelStub } from '../models';
+import { BaseModel } from '../models';
 import { AccountType } from '../models/account.model';
 import { User } from '../models/user.model';
 import { AsyncJobService } from './async-job.service';
-import { BaseBackendService } from './base-backend.service';
+import { BaseBackendService, CSCommands } from './base-backend.service';
 import { LocalStorageService } from './local-storage.service';
 import { Utils } from './utils/utils.service';
-import { Store } from '@ngrx/store';
-import { State } from '../../reducers/index';
-import * as authActions from '../../reducers/auth/redux/auth.actions';
 import { JobsNotificationService } from './jobs-notification.service';
 
 export interface Capabilities {
-  securitygroupsenabled: boolean;
-  dynamicrolesenabled: boolean;
-  cloudstackversion: string;
-  userpublictemplateenabled: boolean;
-  supportELB: string; // boolean string
-  projectinviterequired: boolean;
   allowusercreateprojects: boolean;
-  customdiskofferingminsize: number;
-  customdiskofferingmaxsize: number;
-  regionsecondaryenabled: boolean;
-  kvmsnapshotenabled: boolean;
-  allowuserviewdestroyedvm: boolean;
   allowuserexpungerecovervm: boolean;
+  allowuserviewdestroyedvm: boolean;
+  apilimitinterval: number;
+  apilimitmax: number;
+  cloudstackversion: string;
+  customdiskofferingmaxsize: number;
+  customdiskofferingminsize: number;
+  dynamicrolesenabled: boolean;
+  kvmsnapshotenabled: boolean;
+  projectinviterequired: boolean;
+  regionsecondaryenabled: boolean;
+  securitygroupsenabled: boolean;
+  supportELB: string; // boolean string
+  userpublictemplateenabled: boolean;
 }
 
 @Injectable()
 @BackendResource({
   entity: '',
-  entityModel: BaseModelStub
 })
-export class AuthService extends BaseBackendService<BaseModelStub> {
+export class AuthService extends BaseBackendService<BaseModel> {
   public loggedIn: BehaviorSubject<boolean>;
+  // tslint:disable-next-line:variable-name
   private _user: User | null;
   private capabilities: Capabilities | null;
 
@@ -46,8 +45,7 @@ export class AuthService extends BaseBackendService<BaseModelStub> {
     protected asyncJobService: AsyncJobService,
     protected storage: LocalStorageService,
     protected http: HttpClient,
-    private store: Store<State>,
-    protected jobsNotificationService: JobsNotificationService
+    protected jobsNotificationService: JobsNotificationService,
   ) {
     super(http);
   }
@@ -59,41 +57,35 @@ export class AuthService extends BaseBackendService<BaseModelStub> {
       this._user = user;
     } catch (e) {}
 
-    this.loggedIn = new BehaviorSubject<boolean>(
-      !!(this._user && this._user.userid)
-    );
+    this.loggedIn = new BehaviorSubject<boolean>(!!(this._user && this._user.userid));
     this.jobsNotificationService.reset();
 
-    return this._user && this._user.userid
-      ? this.getCapabilities().toPromise()
-      : Promise.resolve()
+    return this._user && this._user.userid ? this.getCapabilities().toPromise() : Promise.resolve();
   }
 
   public get user(): User | null {
     return this._user;
   }
 
-  public login(
-    username: string,
-    password: string,
-    domain?: string
-  ): Observable<void> {
-    return this.postRequest('login', { username, password, domain })
-      .map(res => this.getResponse(res))
-      .do((res) => this.saveUserDataToLocalStorage(res))
-      .switchMap(() => this.getCapabilities())
-      .do(() => this.loggedIn.next(true))
-      .catch(error => this.handleCommandError(error.error));
+  public login(username: string, password: string, domain?: string): Observable<void> {
+    return this.postRequest('login', { username, password, domain }).pipe(
+      map(res => this.getResponse(res)),
+      tap(res => this.saveUserDataToLocalStorage(res)),
+      switchMap(() => this.getCapabilities()),
+      tap(() => this.loggedIn.next(true)),
+      catchError(error => this.handleCommandError(error.error)),
+    );
   }
 
   public logout(): Observable<void> {
-    return this.postRequest('logout')
-      .do(() => this.setLoggedOut())
-      .catch(error => Observable.throw('Unable to log out.'));
+    return this.postRequest('logout').pipe(
+      tap(() => this.setLoggedOut()),
+      catchError(error => throwError('Unable to log out.')),
+    );
   }
 
   public isLoggedIn(): Observable<boolean> {
-    return Observable.of(!!(this._user && this._user.userid));
+    return of(!!(this._user && this._user.userid));
   }
 
   public isAdmin(): boolean {
@@ -126,15 +118,15 @@ export class AuthService extends BaseBackendService<BaseModelStub> {
   }
 
   private setLoggedOut(): void {
-    this.store.dispatch(new authActions.LogOutUserAccount());
     this._user = null;
     this.storage.remove('user');
     this.loggedIn.next(false);
   }
 
   private getCapabilities(): Observable<void> {
-    return this.sendCommand('listCapabilities', {}, '')
-      .map(({ capability }) => (this.capabilities = capability))
-      .catch(() => this.logout());
+    return this.sendCommand(CSCommands.ListCapabilities, {}, '').pipe(
+      map(({ capability }) => (this.capabilities = capability)),
+      catchError(() => this.logout()),
+    );
   }
 }

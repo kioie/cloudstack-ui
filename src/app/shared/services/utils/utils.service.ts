@@ -1,11 +1,5 @@
+import { RouterState } from '@angular/router';
 import * as uuid from 'uuid';
-import {
-  Params,
-  RouterState,
-  RouterStateSnapshot
-} from '@angular/router';
-import { RouterStateSerializer } from '@ngrx/router-store';
-
 
 export class Utils {
   public static getUniqueId(): string {
@@ -16,16 +10,15 @@ export class Utils {
     enumerator: number,
     denominator: number,
     denominatorExponent?: number,
-    precision?: number
+    precision?: number,
   ): number {
     const calculatedExponent = denominatorExponent != null ? denominatorExponent : 1;
     const calculatedDenominator = Math.pow(denominator, calculatedExponent);
 
     if (precision) {
       return +(enumerator / calculatedDenominator).toFixed(precision);
-    } else {
-      return enumerator / calculatedDenominator;
     }
+    return enumerator / calculatedDenominator;
   }
 
   public static convertToGb(value?: number): number {
@@ -33,6 +26,13 @@ export class Utils {
       return 0;
     }
     return value / Math.pow(2, 30);
+  }
+
+  public static convertBytesToMegabytes(bytes: number): number | undefined {
+    if (bytes == null) {
+      return undefined;
+    }
+    return bytes / 1048576; // bytes / 2^20
   }
 
   public static matchLower(string: string, subString: string): boolean {
@@ -57,15 +57,13 @@ export class Utils {
   }
 
   public static convertBooleanToBooleanString(boolean: boolean): string {
-    if (boolean === true) {
+    if (boolean) {
       return 'true';
     }
 
-    if (boolean === false) {
+    if (!boolean) {
       return 'false';
     }
-
-    throw new Error('Invalid argument');
   }
 
   public static parseJsonString(string): any {
@@ -82,37 +80,12 @@ export class Utils {
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
 
-    const darkness = 1 - ( 0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    const darkness = 1 - (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
     return darkness > 0.5;
   }
 
   public static sortByName = (a, b) => {
-    return a.name.localeCompare(b.name);
+    return a.name && a.name.localeCompare(b.name);
   };
-}
-
-
-/**
- * The RouterStateSerializer takes the current RouterStateSnapshot
- * and returns any pertinent information needed. The snapshot contains
- * all information about the state of the router at the given point in time.
- * The entire snapshot is complex and not always needed. In this case, you only
- * need the URL and query parameters from the snapshot in the store. Other items could be
- * returned such as route parameters and static route data.
- */
-
-export interface RouterStateUrl {
-  url: string;
-  queryParams: Params;
-}
-
-export class CustomRouterStateSerializer
-  implements RouterStateSerializer<RouterStateUrl> {
-  serialize(routerState: RouterStateSnapshot): RouterStateUrl {
-    const { url } = routerState;
-    const queryParams = routerState.root.queryParams;
-
-    return { url, queryParams };
-  }
 }

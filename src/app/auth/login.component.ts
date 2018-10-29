@@ -1,26 +1,24 @@
-import {
-  Component,
-  OnInit,
-  ViewChild
-} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl } from '@angular/forms';
-import {
-  ActivatedRoute,
-  Router
-} from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { select, Store } from '@ngrx/store';
+import { first } from 'rxjs/operators';
+
 import { AuthService } from '../shared/services/auth.service';
-import { ConfigService } from '../shared/services/config.service';
-import { NotificationService } from '../shared/services/notification.service';
+import { SnackBarService } from '../core/services/';
 import { LocalStorageService } from '../shared/services/local-storage.service';
+import { configSelectors, State } from '../root-store';
 
 @Component({
   selector: 'cs-login',
   templateUrl: './login.component.html',
-  styleUrls: ['login.component.scss']
+  styleUrls: ['login.component.scss'],
 })
 export class LoginComponent implements OnInit {
-  @ViewChild('user') public usernameField;
-  @ViewChild('pass') public passwordField;
+  @ViewChild('user')
+  public usernameField;
+  @ViewChild('pass')
+  public passwordField;
 
   public username = '';
   public password = '';
@@ -32,19 +30,25 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private auth: AuthService,
-    private notification: NotificationService,
+    private notification: SnackBarService,
     private route: ActivatedRoute,
     private router: Router,
-    private configService: ConfigService,
-    private storage: LocalStorageService
+    private storage: LocalStorageService,
+    private store: Store<State>,
   ) {}
 
   public ngOnInit(): void {
     const value = this.storage.read(this.key);
     this.showDomain = value === 'true';
-    const domainFromConfig = this.configService.get('defaultDomain');
     const domainFromQueryParams = this.route.snapshot.queryParams['domain'];
-    this.domain = domainFromQueryParams || domainFromConfig || '';
+    this.store
+      .pipe(
+        select(configSelectors.get('defaultDomain')),
+        first(),
+      )
+      .subscribe(domainFromConfig => {
+        this.domain = domainFromQueryParams || domainFromConfig || '';
+      });
     this.loading = false;
   }
 
@@ -81,9 +85,7 @@ export class LoginComponent implements OnInit {
     const { queryParams } = this.route.snapshot;
 
     const next =
-      queryParams['next'] &&
-      queryParams['next'] !== '/login' &&
-      queryParams['next'] !== 'login'
+      queryParams['next'] && queryParams['next'] !== '/login' && queryParams['next'] !== 'login'
         ? queryParams['next']
         : '';
 
@@ -91,9 +93,11 @@ export class LoginComponent implements OnInit {
   }
 
   private handleError(error: any): void {
-    this.notification.message({
-      translationToken: error.message,
-      interpolateParams: error.params
-    });
+    this.notification
+      .open({
+        translationToken: error.message,
+        interpolateParams: error.params,
+      })
+      .subscribe();
   }
 }

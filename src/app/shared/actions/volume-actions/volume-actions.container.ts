@@ -1,8 +1,10 @@
 import { Component, Input } from '@angular/core';
 import { Store } from '@ngrx/store';
+import { filter, onErrorResumeNext } from 'rxjs/operators';
+
 import { DialogService } from '../../../dialog/dialog-service/dialog.service';
-import { State } from '../../../reducers/index';
-import { Volume } from '../../models/volume.model';
+import { State } from '../../../reducers';
+import { Volume } from '../../models';
 import { AuthService } from '../../services/auth.service';
 
 import * as volumeActions from '../../../reducers/volumes/redux/volumes.actions';
@@ -13,32 +15,46 @@ import * as snapshotActions from '../../../reducers/snapshots/redux/snapshot.act
   template: `
     <cs-volume-actions
       [volume]="volume"
-      (onVolumeDelete)="onVolumeDelete($event)"
-      (onVolumeAttach)="onVolumeAttach($event)"
-      (onVolumeDetach)="onVolumeDetach($event)"
-      (onSnapshotAdd)="onSnapshotAdd($event)"
-      (onVolumeResize)="onVolumeResize($event)"
-      (onVolumeSchedule)="onVolumeSchedule($event)"
+      (volumeDeleted)="onVolumeDelete($event)"
+      (volumeAttached)="onVolumeAttach($event)"
+      (volumeDetached)="onVolumeDetach($event)"
+      (snapshotAdded)="onSnapshotAdd($event)"
+      (volumeResized)="onVolumeResize($event)"
+      (volumeScheduled)="onVolumeSchedule($event)"
     >
     </cs-volume-actions>`,
 })
 export class VolumeActionsContainerComponent {
-  @Input() public volume: Volume;
+  @Input()
+  public volume: Volume;
 
   constructor(
     public dialogService: DialogService,
     public authService: AuthService,
-    private store: Store<State>
-  ) {
-  }
+    private store: Store<State>,
+  ) {}
 
   public onVolumeDelete(volume: Volume): void {
-    this.dialogService.confirm({
-      message: 'DIALOG_MESSAGES.VOLUME.CONFIRM_DELETION'
-    })
-      .onErrorResumeNext()
-      .filter(res => Boolean(res))
+    this.dialogService
+      .confirm({
+        message: 'DIALOG_MESSAGES.VOLUME.CONFIRM_DELETION',
+      })
+      .pipe(
+        onErrorResumeNext(),
+        filter(Boolean),
+      )
       .subscribe(() => {
+        if (volume.snapshots && !!volume.snapshots.length) {
+          this.dialogService
+            .confirm({ message: 'DIALOG_MESSAGES.SNAPSHOT.CONFIRM_ALL_DELETION' })
+            .pipe(
+              onErrorResumeNext(),
+              filter(Boolean),
+            )
+            .subscribe(() =>
+              this.store.dispatch(new snapshotActions.DeleteSnapshots(volume.snapshots)),
+            );
+        }
         this.store.dispatch(new volumeActions.DeleteVolume(volume));
       });
   }
